@@ -23,9 +23,8 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* --- CAPA / HERO --- */
         .hero {
-            height: 50vh;
+            height: 40vh;
             background: linear-gradient(rgba(0,0,0,0.7), var(--bg)), 
                         url('https://images.unsplash.com/photo-1514525253344-a812bc9601d3?auto=format&fit=crop&w=1000&q=80');
             background-size: cover;
@@ -37,7 +36,7 @@
         }
 
         .hero h1 {
-            font-size: 5rem;
+            font-size: 4rem;
             margin: 0;
             background: linear-gradient(to right, var(--neon), var(--pink));
             -webkit-background-clip: text;
@@ -45,7 +44,6 @@
             font-weight: 900;
         }
 
-        /* --- LOGIN --- */
         #login-screen {
             display: flex;
             flex-direction: column;
@@ -58,14 +56,11 @@
             color: black;
             padding: 15px 30px;
             border-radius: 50px;
-            text-decoration: none;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
             border: none;
         }
 
-        /* --- ÁREA DE POSTAR --- */
         #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
 
         .input-box {
@@ -96,17 +91,13 @@
             cursor: pointer;
         }
 
-        /* --- CARDS DE FOFOCA --- */
         .fofoca-card {
             background: #1a1a20;
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 15px;
             border-left: 5px solid var(--neon);
-            animation: fadeIn 0.5s ease;
         }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
     </style>
 </head>
 <body>
@@ -117,8 +108,8 @@
     </header>
 
     <div id="login-screen">
-        <h3>Para ler e postar anonimamente, entre na rede:</h3>
-        <button class="btn-login" onclick="fakeLogin()">Entrar com Instagram/Facebook</button>
+        <h3>Para ler e postar anonimamente, entre no mural:</h3>
+        <button class="btn-login" onclick="fakeLogin()">Aceder ao Mural</button>
     </div>
 
     <div id="feed-container">
@@ -127,34 +118,30 @@
             <button class="btn-post" onclick="enviarFofoca()">Soltar o Verbo!</button>
             <div style="clear: both;"></div>
         </div>
-
-        <div id="mural">
-            </div>
+        <div id="mural"></div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (Substitua pelos seus dados do console do Firebase)
+        // CONFIGURAÇÃO ATUALIZADA COM AS TUAS CHAVES
         const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
-            authDomain: "SEU_PROJETO.firebaseapp.com",
-            projectId: "SEU_PROJETO",
-            storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "ID",
-            appId: "APP_ID"
+            apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
+            authDomain: "xoxo-fofocas.firebaseapp.com",
+            projectId: "xoxo-fofocas",
+            storageBucket: "xoxo-fofocas.firebasestorage.app",
+            messagingSenderId: "730968176054",
+            appId: "1:730968176054:web:fcabf0465b189fddbdbd17",
+            measurementId: "G-3DZPC3E7SV"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Simulação de Login (Para funcionamento local imediato)
         function fakeLogin() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
         }
 
-        // Função para salvar no Banco de Dados
         function enviarFofoca() {
             const texto = document.getElementById('fofocaInput').value;
             if(texto.trim() === "") return;
@@ -165,10 +152,12 @@
             })
             .then(() => {
                 document.getElementById('fofocaInput').value = "";
+            })
+            .catch((error) => {
+                alert("Erro ao enviar! Verifica se as Regras do Firestore estão em 'Modo de Teste'.");
             });
         }
 
-        // Função para ler as fofocas em tempo real
         function carregarFofocas() {
             db.collection("fofocas").orderBy("data", "desc")
             .onSnapshot((snapshot) => {
