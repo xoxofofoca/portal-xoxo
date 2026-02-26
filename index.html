@@ -11,22 +11,37 @@
 
     <style>
         :root {
-            --neon: #00f2ff;
-            --pink: #ff007f;
-            --bg: #0a0a0c;
+            --neon: #8b0000; /* Vermelho sangue no lugar do neon */
+            --pink: #330000;
+            --bg: #050505;
+        }
+
+        /* ANIMAÇÕES MACABRAS */
+        @keyframes tremor {
+          0% { transform: translate(1px, 1px) rotate(0deg); }
+          25% { transform: translate(-1px, -1px) rotate(-1deg); }
+          50% { transform: translate(-2px, 1px) rotate(1deg); }
+          75% { transform: translate(1px, -2px) rotate(0deg); }
+          100% { transform: translate(0, 0) rotate(-1deg); }
+        }
+
+        @keyframes fumaca-sombria {
+          0% { text-shadow: 0 0 10px #8b0000, 0 0 20px #000; opacity: 0.8; }
+          50% { text-shadow: 0 0 40px #ff0000, 0 0 60px #1a0000; opacity: 1; transform: scale(1.02); }
+          100% { text-shadow: 0 0 15px #8b0000, 0 0 25px #000; opacity: 0.8; }
         }
 
         body {
             margin: 0;
             background-color: var(--bg);
             color: white;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         .hero {
             height: 40vh;
-            background: linear-gradient(rgba(0,0,0,0.7), var(--bg)), 
-                        url('https://images.unsplash.com/photo-1514525253344-a812bc9601d3?auto=format&fit=crop&w=1000&q=80');
+            background: linear-gradient(rgba(0,0,0,0.8), var(--bg)), 
+                        url('https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=1000&q=80');
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -35,13 +50,14 @@
             text-align: center;
         }
 
+        /* O TÍTULO ALTERADO */
         .hero h1 {
-            font-size: 4rem;
+            font-size: 5rem;
             margin: 0;
-            background: linear-gradient(to right, var(--neon), var(--pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #000;
             font-weight: 900;
+            letter-spacing: 15px;
+            animation: tremor 0.1s infinite, fumaca-sombria 3s ease-in-out infinite;
         }
 
         #login-screen {
@@ -52,22 +68,23 @@
         }
 
         .btn-login {
-            background: white;
-            color: black;
+            background: #8b0000;
+            color: white;
             padding: 15px 30px;
-            border-radius: 50px;
+            border-radius: 5px;
             font-weight: bold;
             cursor: pointer;
-            border: none;
+            border: 1px solid red;
+            text-transform: uppercase;
         }
 
         #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
 
         .input-box {
-            background: #16161a;
+            background: #0f0f0f;
             padding: 20px;
-            border-radius: 15px;
-            border: 1px solid #333;
+            border-radius: 5px;
+            border: 1px solid #440000;
             margin-bottom: 30px;
         }
 
@@ -75,28 +92,29 @@
             width: 100%;
             background: transparent;
             border: none;
-            color: white;
+            color: #ff0000;
             font-size: 1.1rem;
             resize: none;
             outline: none;
         }
 
         .btn-post {
-            background: var(--pink);
+            background: #8b0000;
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 2px;
             float: right;
             cursor: pointer;
         }
 
         .fofoca-card {
-            background: #1a1a20;
+            background: #0a0a0a;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 5px;
             margin-bottom: 15px;
-            border-left: 5px solid var(--neon);
+            border-left: 5px solid #8b0000;
+            box-shadow: 0 0 10px rgba(139, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -104,17 +122,17 @@
 
     <header class="hero">
         <h1>XOXO</h1>
-        <p>A fofoca que a cidade ama.</p>
+        <p style="color: #600; font-weight: bold;">A fofoca que a cidade teme.</p>
     </header>
 
     <div id="login-screen">
-        <h3>Para ler e postar anonimamente, entre no mural:</h3>
+        <h3 style="color: #8b0000;">Entre no mural... se tiver coragem.</h3>
         <button class="btn-login" onclick="fakeLogin()">Aceder ao Mural</button>
     </div>
 
     <div id="feed-container">
         <div class="input-box">
-            <textarea id="fofocaInput" rows="3" placeholder="Qual o segredo de hoje?"></textarea>
+            <textarea id="fofocaInput" rows="3" placeholder="Qual o segredo sombrio de hoje?"></textarea>
             <button class="btn-post" onclick="enviarFofoca()">Soltar o Verbo!</button>
             <div style="clear: both;"></div>
         </div>
@@ -122,7 +140,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO ATUALIZADA COM AS TUAS CHAVES
         const firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -167,8 +184,8 @@
                     const fofoca = doc.data();
                     mural.innerHTML += `
                         <div class="fofoca-card">
-                            <small style="color: #666;">📢 Enviado anonimamente</small>
-                            <p>${fofoca.conteudo}</p>
+                            <small style="color: #444;">📢 Enviado das sombras...</small>
+                            <p style="color: #ccc;">${fofoca.conteudo}</p>
                         </div>
                     `;
                 });
