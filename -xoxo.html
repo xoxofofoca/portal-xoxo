@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOXO - O Mural dos Segredos</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+
+    <style>
+        :root {
+            --neon: #00f2ff;
+            --pink: #ff007f;
+            --bg: #0a0a0c;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* --- CAPA / HERO --- */
+        .hero {
+            height: 50vh;
+            background: linear-gradient(rgba(0,0,0,0.7), var(--bg)), 
+                        url('https://images.unsplash.com/photo-1514525253344-a812bc9601d3?auto=format&fit=crop&w=1000&q=80');
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            margin: 0;
+            background: linear-gradient(to right, var(--neon), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        /* --- LOGIN --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+
+        .btn-login {
+            background: white;
+            color: black;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+        }
+
+        /* --- ÁREA DE POSTAR --- */
+        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
+
+        .input-box {
+            background: #16161a;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            resize: none;
+            outline: none;
+        }
+
+        .btn-post {
+            background: var(--pink);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            float: right;
+            cursor: pointer;
+        }
+
+        /* --- CARDS DE FOFOCA --- */
+        .fofoca-card {
+            background: #1a1a20;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--neon);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+    </style>
+</head>
+<body>
+
+    <header class="hero">
+        <h1>XOXO</h1>
+        <p>A fofoca que a cidade ama.</p>
+    </header>
+
+    <div id="login-screen">
+        <h3>Para ler e postar anonimamente, entre na rede:</h3>
+        <button class="btn-login" onclick="fakeLogin()">Entrar com Instagram/Facebook</button>
+    </div>
+
+    <div id="feed-container">
+        <div class="input-box">
+            <textarea id="fofocaInput" rows="3" placeholder="Qual o segredo de hoje?"></textarea>
+            <button class="btn-post" onclick="enviarFofoca()">Soltar o Verbo!</button>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div id="mural">
+            </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO DO FIREBASE (Substitua pelos seus dados do console do Firebase)
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "ID",
+            appId: "APP_ID"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Simulação de Login (Para funcionamento local imediato)
+        function fakeLogin() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('feed-container').style.display = 'block';
+            carregarFofocas();
+        }
+
+        // Função para salvar no Banco de Dados
+        function enviarFofoca() {
+            const texto = document.getElementById('fofocaInput').value;
+            if(texto.trim() === "") return;
+
+            db.collection("fofocas").add({
+                conteudo: texto,
+                data: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                document.getElementById('fofocaInput').value = "";
+            });
+        }
+
+        // Função para ler as fofocas em tempo real
+        function carregarFofocas() {
+            db.collection("fofocas").orderBy("data", "desc")
+            .onSnapshot((snapshot) => {
+                const mural = document.getElementById('mural');
+                mural.innerHTML = "";
+                snapshot.forEach((doc) => {
+                    const fofoca = doc.data();
+                    mural.innerHTML += `
+                        <div class="fofoca-card">
+                            <small style="color: #666;">📢 Enviado anonimamente</small>
+                            <p>${fofoca.conteudo}</p>
+                        </div>
+                    `;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
