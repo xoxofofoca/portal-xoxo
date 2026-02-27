@@ -11,14 +11,12 @@
 
     <style>
         :root {
-            /* Cores de suspense */
             --fog-gray: #b0b0b0;
             --dark-gray: #2c2c2c;
             --deep-black: #050505;
-            --subtle-red: #4a0000; /* Vermelho muito sutil para detalhes */
+            --subtle-red: #4a0000;
         }
 
-        /* ANIMAÇÃO DE NÉVOA EM MOVIMENTO */
         @keyframes neblina-movimento {
           0% { background-position: 0% 50%; opacity: 0.8; }
           50% { background-position: 100% 50%; opacity: 1; }
@@ -34,14 +32,12 @@
         body {
             margin: 0;
             background-color: var(--deep-black);
-            color: #ddd; /* Texto ligeiramente off-white para suspense */
+            color: #ddd;
             font-family: 'Courier New', Courier, monospace;
         }
 
         .hero {
             height: 40vh;
-            /* IMAGEM DE FUNDO ATUALIZADA: Homem na névoa (Menos perturbadora, mais suspense) */
-            /* Link de imagem de exemplo: homem em silhueta na neblina profunda */
             background-image: linear-gradient(rgba(0,0,0,0.6), var(--deep-black)), 
                               url('https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1000&q=80');
             background-size: cover;
@@ -52,39 +48,34 @@
             align-items: center;
             text-align: center;
             position: relative;
-            overflow: hidden; /* Para conter a névoa animada */
+            overflow: hidden;
         }
 
-        /* CAMADA DE NÉVOA ANIMADA SOBRE A IMAGEM */
         .hero::before {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* Efeito de névoa em movimento usando gradiente e animação */
             background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.1), rgba(0,0,0,0.1));
             background-size: 400% 400%;
             animation: neblina-movimento 15s ease infinite;
-            pointer-events: none; /* Não interfere nos cliques */
+            pointer-events: none;
         }
 
-        /* O TÍTULO ALTERADO PARA SUSPENSE (SUTIL) */
         .hero h1 {
             font-size: 5rem;
             margin: 0;
             color: #ccc;
             font-weight: 900;
             letter-spacing: 12px;
-            /* Efeito de brilho de névoa sutil */
             text-shadow: 0 0 15px rgba(200, 200, 200, 0.4);
-            animation: tremor-sutil 0.2s infinite; /* Tremor muito mais suave */
-            position: relative; /* Fica acima da névoa animada */
+            animation: tremor-sutil 0.2s infinite;
+            position: relative;
         }
 
-        /* Frase de efeito mais adequada ao suspense sutil */
         .hero p {
             color: #999;
             font-style: italic;
-            position: relative; /* Fica acima da névoa animada */
+            position: relative;
         }
 
         #login-screen {
@@ -94,12 +85,11 @@
             padding: 50px;
         }
 
-        /* Botão estilizado para suspense */
         .btn-login {
-            background: #333; /* Cinza escuro */
+            background: #333;
             color: white;
             padding: 15px 30px;
-            border-radius: 2px; /* Cantos quadrados */
+            border-radius: 2px;
             font-weight: bold;
             cursor: pointer;
             border: 1px solid #555;
@@ -129,10 +119,9 @@
             font-size: 1.1rem;
             resize: none;
             outline: none;
-            font-family: inherit; /* Mantém Courier New */
+            font-family: inherit;
         }
 
-        /* Botão de postagem sutil */
         .btn-post {
             background: #222;
             color: #999;
@@ -155,7 +144,7 @@
             padding: 20px;
             border-radius: 2px;
             margin-bottom: 15px;
-            border-left: 3px solid #444; /* Borda cinza sutil */
+            border-left: 3px solid #444;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
     </style>
@@ -201,19 +190,30 @@
             carregarFofocas();
         }
 
-        function enviarFofoca() {
+        // ALTERAÇÃO REALIZADA AQUI: Adicionado async e captura de IP
+        async function enviarFofoca() {
             const texto = document.getElementById('fofocaInput').value;
             if(texto.trim() === "") return;
 
+            let ipCapturado = "Desconhecido";
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                ipCapturado = data.ip;
+            } catch (error) {
+                console.error("Erro ao pegar IP:", error);
+            }
+
             db.collection("fofocas").add({
                 conteudo: texto,
-                data: firebase.firestore.FieldValue.serverTimestamp()
+                data: firebase.firestore.FieldValue.serverTimestamp(),
+                ip_aparelho: ipCapturado // O IP aparecerá no seu console agora
             })
             .then(() => {
                 document.getElementById('fofocaInput').value = "";
             })
             .catch((error) => {
-                alert("Erro ao enviar! Verifica se as Regras do Firestore estão em 'Modo de Teste'.");
+                alert("Erro ao enviar! Verifique suas Regras do Firestore.");
             });
         }
 
