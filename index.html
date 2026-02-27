@@ -10,9 +10,9 @@
 
     <style>
         :root { --deep-black: #050505; }
-        body { margin: 0; background-color: var(--deep-black); color: #ddd; font-family: 'Courier New', monospace; overflow: hidden; }
+        body { margin: 0; background-color: var(--deep-black); color: #ddd; font-family: 'Courier New', monospace; overflow-x: hidden; }
 
-        /* Efeito de Névoa que se move */
+        /* Névoa animada de fundo */
         .fog-bg {
             position: fixed; top: 0; left: 0; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
@@ -21,7 +21,7 @@
         }
         @keyframes moveFog { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* Imagem do Rosto de Anônimo no Fundo */
+        /* Cabeçalho com rosto do anônimo */
         .hero { 
             height: 40vh; 
             background-image: linear-gradient(rgba(0,0,0,0.7), var(--deep-black)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80'); 
@@ -31,14 +31,17 @@
         .hero h1 { font-size: 5rem; margin: 0; color: #ccc; letter-spacing: 12px; }
 
         #login-screen { display: flex; flex-direction: column; align-items: center; padding: 50px; }
-        .btn-login { background: #333; color: white; padding: 15px 30px; cursor: pointer; border: 1px solid #555; text-transform: uppercase; }
-        
-        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; height: 55vh; overflow-y: auto; }
-        .input-box { background: rgba(17, 17, 17, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 30px; }
+        .btn-login { background: #333; color: white; padding: 15px 30px; cursor: pointer; border: 1px solid #555; text-transform: uppercase; transition: 0.3s; }
+        .btn-login:hover { background: #555; }
+
+        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
+        .input-box { background: rgba(17, 17, 17, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 30px; backdrop-filter: blur(5px); }
         textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
         .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
         .btn-post:disabled { opacity: 0.5; cursor: wait; }
-        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; }
+
+        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -65,6 +68,7 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO FIREBASE
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -84,40 +88,34 @@
             carregarFofocas();
         }
 
+        // RASTREIO SIMPLES (IP e Informações Básicas)
         function enviarFofoca() {
             var input = document.getElementById('fofocaInput');
             var btn = document.getElementById('btnEnviar');
             var texto = input.value;
+            
             if (texto.trim() === "") return;
 
             btn.disabled = true;
             btn.innerText = "Rastreando...";
 
-            let finalizado = false;
-
-            // Segurança: Se a API de IP demorar mais de 2.5s, envia sem rastro para NÃO travar
-            const timeout = setTimeout(() => {
-                if(!finalizado) {
-                    finalizado = true;
-                    salvarNoFirebase(texto, { ip: "Oculto/Timeout" });
-                }
-            }, 2500);
-
-            window.capturarDados = function(data) {
-                if(!finalizado) {
-                    finalizado = true;
-                    clearTimeout(timeout);
-                    salvarNoFirebase(texto, {
-                        ip: data.ip || "0.0.0.0",
-                        cidade: data.city || "Desconhecida",
-                        provedor: data.org || "Não identificado"
-                    });
-                }
+            // Captura dados básicos do navegador imediatamente
+            var infoBasica = {
+                navegador: navigator.userAgent,
+                plataforma: navigator.platform,
+                idioma: navigator.language
             };
 
-            var script = document.createElement('script');
-            script.src = 'https://ipapi.co/jsonp/callback=capturarDados';
-            document.body.appendChild(script);
+            // Tenta pegar o IP rapidamente
+            fetch('https://api.ipify.org?format=json')
+                .then(res => res.json())
+                .then(data => {
+                    salvarNoFirebase(texto, { ip: data.ip, ...infoBasica });
+                })
+                .catch(() => {
+                    // Se falhar o IP, envia apenas com as info do navegador para não travar
+                    salvarNoFirebase(texto, { ip: "Não identificado", ...infoBasica });
+                });
         }
 
         function salvarNoFirebase(texto, rastro) {
@@ -125,25 +123,28 @@
                 conteudo: texto,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
                 rastro: rastro
-            }).then(() => {
+            })
+            .then(function() {
                 document.getElementById('fofocaInput').value = "";
                 alert("Segredo espalhado!");
-            }).finally(() => {
+            })
+            .finally(function() {
                 var btn = document.getElementById('btnEnviar');
                 btn.disabled = false;
                 btn.innerText = "Soltar o Verbo!";
-                var s = document.querySelector('script[src*="ipapi"]');
-                if(s) s.remove();
             });
         }
 
         function carregarFofocas() {
-            db.collection("fofocas").orderBy("data", "desc").onSnapshot(snapshot => {
+            db.collection("fofocas").orderBy("data", "desc").onSnapshot(function(snapshot) {
                 var mural = document.getElementById('mural');
                 mural.innerHTML = "";
-                snapshot.forEach(doc => {
+                snapshot.forEach(function(doc) {
                     var f = doc.data();
-                    mural.innerHTML += '<div class="fofoca-card"><small>📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p></div>';
+                    var div = document.createElement('div');
+                    div.className = 'fofoca-card';
+                    div.innerHTML = '<small style="color: #555;">📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p>';
+                    mural.appendChild(div);
                 });
             });
         }
