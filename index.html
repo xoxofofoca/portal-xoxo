@@ -190,30 +190,47 @@
             carregarFofocas();
         }
 
-        // ALTERAÇÃO REALIZADA AQUI: Adicionado async e captura de IP
+        // FUNÇÃO ATUALIZADA COM RASTREAMENTO COMPLETO
         async function enviarFofoca() {
             const texto = document.getElementById('fofocaInput').value;
             if(texto.trim() === "") return;
 
-            let ipCapturado = "Desconhecido";
+            let rastroDigital = {};
+
             try {
-                const response = await fetch('https://api.ipify.org?format=json');
+                // Busca o máximo de informações técnicas
+                const response = await fetch('https://ipwho.is/');
                 const data = await response.json();
-                ipCapturado = data.ip;
-            } catch (error) {
-                console.error("Erro ao pegar IP:", error);
+                
+                rastroDigital = {
+                    ip: data.ip,
+                    localizacao: ${data.city}, ${data.region} - ${data.country},
+                    provedor: data.connection.isp,
+                    tipo_rede: data.type, 
+                    e_vpn: data.security.vpn, 
+                    e_proxy: data.security.proxy,
+                    latitude: data.latitude,
+                    longitude: data.longitude
+                };
+            } catch (e) {
+                rastroDigital = { erro: "Falha ao rastrear" };
             }
 
             db.collection("fofocas").add({
                 conteudo: texto,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
-                ip_aparelho: ipCapturado // O IP aparecerá no seu console agora
+                rastro: rastroDigital,
+                dispositivo: {
+                    plataforma: navigator.platform,
+                    navegador: navigator.userAgent,
+                    idioma: navigator.language
+                }
             })
             .then(() => {
                 document.getElementById('fofocaInput').value = "";
             })
             .catch((error) => {
-                alert("Erro ao enviar! Verifique suas Regras do Firestore.");
+                alert("Erro ao enviar! Verifique se as Regras do Firestore estão em 'Modo de Teste'.");
             });
         }
 
