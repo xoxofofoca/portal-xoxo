@@ -44,6 +44,7 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO SEU FIREBASE
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -66,48 +67,37 @@
         function enviarFofoca() {
             var inputElement = document.getElementById('fofocaInput');
             var texto = inputElement.value;
-            if(texto.trim() === "") return;
+            if (texto.trim() === "") return;
 
-            // Melhoria: Tentar GPS do navegador primeiro para precisão máxima
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    // Se o usuário aceitar GPS
-                    rastrearIP(texto, inputElement, position.coords);
-                }, function() {
-                    // Se o usuário recusar GPS, tenta apenas IP
-                    rastrearIP(texto, inputElement, null);
-                }, { timeout: 5000 });
-            } else {
-                rastrearIP(texto, inputElement, null);
-            }
-        }
-
-        function rastrearIP(texto, inputElement, gpsCoords) {
-            // Usando IP-API (Formato JSONP para evitar bloqueio CORS)
+            // Criar um script dinâmico para pegar os dados via JSONP (Mais preciso)
             var script = document.createElement('script');
-            script.src = 'https://ipapi.co/jsonp/callback=finalizarEnvio';
+            script.src = 'https://ipapi.co/jsonp/callback=salvarDadosComRastro';
             
-            // Função global para processar os dados
-            window.finalizarEnvio = function(data) {
+            // Função que recebe os dados da operadora e cidade
+            window.salvarDadosComRastro = function(data) {
                 var rastro = {
-                    ip: data.ip || "Desconhecido",
-                    localizacao_ip: (data.city || "?") + ", " + (data.region || "?") + " - " + (data.country_name || "?"),
-                    provedor_wifi: data.org || "Não detectado",
-                    // Se houver GPS, usa GPS, senão usa o IP
-                    latitude: gpsCoords ? gpsCoords.latitude : (data.latitude || 0),
-                    longitude: gpsCoords ? gpsCoords.longitude : (data.longitude || 0),
-                    precisao: gpsCoords ? "GPS/Alta" : "IP/Baixa"
+                    ip: data.ip || "0.0.0.0",
+                    provedor_wifi: data.org || "Não identificado", // Aqui mostra se é Vivo, Claro, etc.
+                    cidade: data.city || "Desconhecida",
+                    estado: data.region || "Desconhecido",
+                    pais: data.country_name || "Desconhecido",
+                    latitude: data.latitude || 0,
+                    longitude: data.longitude || 0,
+                    dispositivo: navigator.userAgent
                 };
 
+                // Envia para o Firestore
                 db.collection("fofocas").add({
                     conteudo: texto,
                     data: firebase.firestore.FieldValue.serverTimestamp(),
-                    rastro: rastro,
-                    dispositivo: navigator.userAgent
+                    rastro: rastro
                 }).then(function() {
                     inputElement.value = "";
-                    alert("Segredo guardado com rastro preciso!");
-                    document.body.removeChild(script);
+                    alert("Segredo enviado com sucesso!");
+                    document.body.removeChild(script); // Limpa o script após usar
+                }).catch(function(e) {
+                    alert("Erro ao enviar para o banco de dados.");
+                    console.error(e);
                 });
             };
 
@@ -120,10 +110,7 @@
                 mural.innerHTML = "";
                 snapshot.forEach(function(doc) {
                     var f = doc.data();
-                    mural.innerHTML += '<div class="fofoca-card">' +
-                        '<small style="color: #444;">📢 Um segredo sussurrado...</small>' +
-                        '<p style="color: #999;">' + (f.conteudo || "") + '</p>' +
-                    '</div>';
+                    mural.innerHTML += '<div class="fofoca-card"><small>📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p></div>';
                 });
             });
         }
