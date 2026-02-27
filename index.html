@@ -3,141 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOXO | Confissões</title>
+    <title>XOXO | Underworld</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
-            --bg-color: #0a0a0c;
-            --card-bg: #16161a;
-            --accent: #e0e0e0;
-            --text-main: #f0f0f0;
-            --text-dim: #88888b;
+            --blood-red: #8b0000;
+            --neon-red: #ff0000;
+            --deep-void: #020202;
+            --card-gray: #0a0a0a;
         }
 
         body {
             margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--deep-void);
+            color: #e0e0e0;
+            font-family: 'Special Elite', 'Courier New', monospace; /* Fonte tipo máquina de escrever antiga */
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
 
-        /* Névoa Suave */
+        /* Névoa Vermelha e Sombria */
         .fog {
             position: fixed;
             top: 0; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
-            opacity: 0.05;
+            opacity: 0.15;
+            filter: sepia(100%) saturate(500%) hue-rotate(-50deg);
             z-index: -1;
-            animation: drift 100s linear infinite;
+            animation: drift 80s linear infinite;
         }
-
         @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
         header {
             text-align: center;
-            padding: 80px 20px 40px;
+            padding: 60px 20px;
         }
 
         header h1 {
-            font-size: 2.5rem;
-            letter-spacing: 8px;
-            font-weight: 200;
+            font-size: 4rem;
+            color: var(--neon-red);
+            text-shadow: 0 0 20px var(--blood-red);
             margin: 0;
-            text-transform: uppercase;
+            letter-spacing: 15px;
         }
 
         header p {
-            color: var(--text-dim);
-            font-style: italic;
-            font-size: 0.9rem;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
             margin-top: 10px;
         }
 
         #main-content {
             width: 90%;
-            max-width: 550px;
+            max-width: 500px;
         }
 
-        /* Caixa de Escrita Elegante */
+        /* Caixa de Confissão "Sinistra" */
         .write-area {
-            background: var(--card-bg);
-            border-radius: 16px;
+            background: var(--card-gray);
+            border: 1px solid #1a0000;
+            border-radius: 4px;
             padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 40px;
-            border: 1px solid #232329;
+            position: relative;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.1);
         }
 
         textarea {
             width: 100%;
             background: transparent;
             border: none;
-            color: var(--text-main);
-            font-size: 1.1rem;
+            color: #ff4d4d;
+            font-size: 1.2rem;
             outline: none;
             resize: none;
-            line-height: 1.6;
             font-family: inherit;
         }
 
         .actions {
             display: flex;
             justify-content: flex-end;
-            margin-top: 15px;
-            border-top: 1px solid #232329;
-            padding-top: 15px;
-        }
-
-        .btn-send {
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-send:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255,255,255,0.1);
-        }
-
-        /* Feed de Mensagens */
-        .confession {
-            background: transparent;
-            padding: 25px 0;
-            border-bottom: 1px solid #1c1c22;
-            animation: fadeIn 0.8s ease forwards;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .confession p {
-            margin: 0;
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: #d1d1d6;
-        }
-
-        .time {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--text-dim);
             margin-top: 10px;
         }
 
-        /* Esconder login por padrão para experiência fluida */
-        #login-screen { padding: 100px 20px; text-align: center; }
-        #feed-container { display: none; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .btn-send {
+            background: transparent;
+            color: var(--neon-red);
+            border: 1px solid var(--blood-red);
+            padding: 8px 20px;
+            text-transform: uppercase;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-send:hover {
+            background: var(--blood-red);
+            color: white;
+            box-shadow: 0 0 15px var(--neon-red);
+        }
+
+        /* Feed de Pecados */
+        .confession {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(90deg, #050000, transparent);
+            border-left: 2px solid var(--blood-red);
+            margin-bottom: 20px;
+        }
+
+        .confession p {
+            font-size: 1.1rem;
+            color: #bbb;
+            line-height: 1.4;
+        }
+
+        .meta {
+            font-size: 0.7rem;
+            color: #444;
+            margin-top: 5px;
+            display: block;
+        }
+
+        #login-screen { padding: 100px 0; }
     </style>
 </head>
 <body>
@@ -145,29 +138,27 @@
     <div class="fog"></div>
 
     <header>
-        <h1>X O X O</h1>
-        <p>Um lugar seguro para o que não pode ser dito.</p>
+        <h1>XOXO</h1>
+        <p>Libere seus demônios. Ninguém está olhando.</p>
     </header>
 
     <div id="login-screen">
-        <button class="btn-send" style="background: transparent; color: white; border: 1px solid #444;" onclick="start()">Entrar Silenciosamente</button>
+        <button class="btn-send" onclick="entrar()">ENTRAR NO VAZIO</button>
     </div>
 
     <div id="feed-container" style="display: none;">
         <div id="main-content">
             <div class="write-area">
-                <textarea id="fofocaInput" rows="4" placeholder="O que está no seu coração hoje?"></textarea>
+                <textarea id="fofocaInput" rows="5" placeholder="Qual o seu pecado mais sujo?"></textarea>
                 <div class="actions">
-                    <button class="btn-send" id="btnEnviar" onclick="enviarFofoca()">Sussurrar</button>
+                    <button class="btn-send" id="btnEnviar" onclick="enviarFofoca()">PECADO COMETIDO</button>
                 </div>
             </div>
-
             <div id="mural"></div>
         </div>
     </div>
 
     <script>
-        // Configuração Firebase (Sua configuração atual)
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -180,9 +171,9 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function start() {
+        function entrar() {
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('feed-container').style.display = 'flex';
+            document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
         }
 
@@ -192,15 +183,13 @@
             if (!input.value.trim()) return;
 
             btn.disabled = true;
-            btn.innerText = "...";
+            btn.innerText = "QUEIMANDO...";
 
-            // Rastreio Simples (IP e Navegador)
+            // Rastreio Simples integrado
             fetch('https://api.ipify.org?format=json')
                 .then(res => res.json())
-                .then(data => {
-                    salvar({ ip: data.ip, device: navigator.platform });
-                })
-                .catch(() => salvar({ ip: "Anônimo", device: "Desconhecido" }));
+                .then(data => salvar({ ip: data.ip }))
+                .catch(() => salvar({ ip: "Anônimo" }));
 
             function salvar(rastro) {
                 db.collection("fofocas").add({
@@ -210,7 +199,7 @@
                 }).then(() => {
                     input.value = "";
                     btn.disabled = false;
-                    btn.innerText = "Sussurrar";
+                    btn.innerText = "PECADO COMETIDO";
                 });
             }
         }
@@ -221,11 +210,10 @@
                 mural.innerHTML = "";
                 snap.forEach(doc => {
                     const f = doc.data();
-                    const dataHora = f.data ? new Date(f.data.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
                     mural.innerHTML += `
                         <div class="confession">
                             <p>${f.conteudo}</p>
-                            <span class="time">Sussurrado às ${dataHora}</span>
+                            <span class="meta">ANÔNIMO RASTREADO: ${f.rastro?.ip || "ESCONDIDO"}</span>
                         </div>`;
                 });
             });
