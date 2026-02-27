@@ -3,148 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOXO - O Mural dos Segredos</title>
+    <title>XOXO | Confissões</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --deep-black: #050505; }
-        body { margin: 0; background-color: var(--deep-black); color: #ddd; font-family: 'Courier New', monospace; overflow-x: hidden; }
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: #16161a;
+            --accent: #e0e0e0;
+            --text-main: #f0f0f0;
+            --text-dim: #88888b;
+        }
 
-        /* Névoa animada de fundo */
-        .fog-bg {
-            position: fixed; top: 0; left: 0; width: 200%; height: 100%;
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Névoa Suave */
+        .fog {
+            position: fixed;
+            top: 0; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
-            opacity: 0.2; z-index: -1;
-            animation: moveFog 40s linear infinite;
+            opacity: 0.05;
+            z-index: -1;
+            animation: drift 100s linear infinite;
         }
-        @keyframes moveFog { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* Cabeçalho com rosto do anônimo */
-        .hero { 
-            height: 40vh; 
-            background-image: linear-gradient(rgba(0,0,0,0.7), var(--deep-black)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80'); 
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; 
+        @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        header {
+            text-align: center;
+            padding: 80px 20px 40px;
         }
-        .hero h1 { font-size: 5rem; margin: 0; color: #ccc; letter-spacing: 12px; }
 
-        #login-screen { display: flex; flex-direction: column; align-items: center; padding: 50px; }
-        .btn-login { background: #333; color: white; padding: 15px 30px; cursor: pointer; border: 1px solid #555; text-transform: uppercase; transition: 0.3s; }
-        .btn-login:hover { background: #555; }
+        header h1 {
+            font-size: 2.5rem;
+            letter-spacing: 8px;
+            font-weight: 200;
+            margin: 0;
+            text-transform: uppercase;
+        }
 
-        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; }
-        .input-box { background: rgba(17, 17, 17, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 30px; backdrop-filter: blur(5px); }
-        textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
-        .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
-        .btn-post:disabled { opacity: 0.5; cursor: wait; }
+        header p {
+            color: var(--text-dim);
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
 
-        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; animation: fadeIn 0.5s ease; }
+        #main-content {
+            width: 90%;
+            max-width: 550px;
+        }
+
+        /* Caixa de Escrita Elegante */
+        .write-area {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 40px;
+            border: 1px solid #232329;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            outline: none;
+            resize: none;
+            line-height: 1.6;
+            font-family: inherit;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            border-top: 1px solid #232329;
+            padding-top: 15px;
+        }
+
+        .btn-send {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.1);
+        }
+
+        /* Feed de Mensagens */
+        .confession {
+            background: transparent;
+            padding: 25px 0;
+            border-bottom: 1px solid #1c1c22;
+            animation: fadeIn 0.8s ease forwards;
+        }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .confession p {
+            margin: 0;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #d1d1d6;
+        }
+
+        .time {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 10px;
+        }
+
+        /* Esconder login por padrão para experiência fluida */
+        #login-screen { padding: 100px 20px; text-align: center; }
+        #feed-container { display: none; width: 100%; display: flex; flex-direction: column; align-items: center; }
     </style>
 </head>
 <body>
 
-    <div class="fog-bg"></div>
+    <div class="fog"></div>
 
-    <header class="hero">
-        <h1>XOXO</h1>
-        <p>Segredos que o silêncio guarda.</p>
+    <header>
+        <h1>X O X O</h1>
+        <p>Um lugar seguro para o que não pode ser dito.</p>
     </header>
 
     <div id="login-screen">
-        <h3>Entre no mural... se tiver coragem.</h3>
-        <button class="btn-login" onclick="fakeLogin()">Aceder ao Mural</button>
+        <button class="btn-send" style="background: transparent; color: white; border: 1px solid #444;" onclick="start()">Entrar Silenciosamente</button>
     </div>
 
-    <div id="feed-container">
-        <div class="input-box">
-            <textarea id="fofocaInput" rows="3" placeholder="O que você sabe que ninguém mais sabe?"></textarea>
-            <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">Soltar o Verbo!</button>
-            <div style="clear: both;"></div>
+    <div id="feed-container" style="display: none;">
+        <div id="main-content">
+            <div class="write-area">
+                <textarea id="fofocaInput" rows="4" placeholder="O que está no seu coração hoje?"></textarea>
+                <div class="actions">
+                    <button class="btn-send" id="btnEnviar" onclick="enviarFofoca()">Sussurrar</button>
+                </div>
+            </div>
+
+            <div id="mural"></div>
         </div>
-        <div id="mural"></div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE
+        // Configuração Firebase (Sua configuração atual)
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
             projectId: "xoxo-fofocas",
             storageBucket: "xoxo-fofocas.firebasestorage.app",
             messagingSenderId: "730968176054",
-            appId: "1:730968176054:web:fcabf0465b189fddbdbd17",
-            measurementId: "G-3DZPC3E7SV"
+            appId: "1:730968176054:web:fcabf0465b189fddbdbd17"
         };
 
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function fakeLogin() {
+        function start() {
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('feed-container').style.display = 'block';
+            document.getElementById('feed-container').style.display = 'flex';
             carregarFofocas();
         }
 
-        // RASTREIO SIMPLES (IP e Informações Básicas)
         function enviarFofoca() {
-            var input = document.getElementById('fofocaInput');
-            var btn = document.getElementById('btnEnviar');
-            var texto = input.value;
-            
-            if (texto.trim() === "") return;
+            const input = document.getElementById('fofocaInput');
+            const btn = document.getElementById('btnEnviar');
+            if (!input.value.trim()) return;
 
             btn.disabled = true;
-            btn.innerText = "Rastreando...";
+            btn.innerText = "...";
 
-            // Captura dados básicos do navegador imediatamente
-            var infoBasica = {
-                navegador: navigator.userAgent,
-                plataforma: navigator.platform,
-                idioma: navigator.language
-            };
-
-            // Tenta pegar o IP rapidamente
+            // Rastreio Simples (IP e Navegador)
             fetch('https://api.ipify.org?format=json')
                 .then(res => res.json())
                 .then(data => {
-                    salvarNoFirebase(texto, { ip: data.ip, ...infoBasica });
+                    salvar({ ip: data.ip, device: navigator.platform });
                 })
-                .catch(() => {
-                    // Se falhar o IP, envia apenas com as info do navegador para não travar
-                    salvarNoFirebase(texto, { ip: "Não identificado", ...infoBasica });
-                });
-        }
+                .catch(() => salvar({ ip: "Anônimo", device: "Desconhecido" }));
 
-        function salvarNoFirebase(texto, rastro) {
-            db.collection("fofocas").add({
-                conteudo: texto,
-                data: firebase.firestore.FieldValue.serverTimestamp(),
-                rastro: rastro
-            })
-            .then(function() {
-                document.getElementById('fofocaInput').value = "";
-                alert("Segredo espalhado!");
-            })
-            .finally(function() {
-                var btn = document.getElementById('btnEnviar');
-                btn.disabled = false;
-                btn.innerText = "Soltar o Verbo!";
-            });
+            function salvar(rastro) {
+                db.collection("fofocas").add({
+                    conteudo: input.value,
+                    data: firebase.firestore.FieldValue.serverTimestamp(),
+                    rastro: rastro
+                }).then(() => {
+                    input.value = "";
+                    btn.disabled = false;
+                    btn.innerText = "Sussurrar";
+                });
+            }
         }
 
         function carregarFofocas() {
-            db.collection("fofocas").orderBy("data", "desc").onSnapshot(function(snapshot) {
-                var mural = document.getElementById('mural');
+            db.collection("fofocas").orderBy("data", "desc").onSnapshot(snap => {
+                const mural = document.getElementById('mural');
                 mural.innerHTML = "";
-                snapshot.forEach(function(doc) {
-                    var f = doc.data();
-                    var div = document.createElement('div');
-                    div.className = 'fofoca-card';
-                    div.innerHTML = '<small style="color: #555;">📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p>';
-                    mural.appendChild(div);
+                snap.forEach(doc => {
+                    const f = doc.data();
+                    const dataHora = f.data ? new Date(f.data.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+                    mural.innerHTML += `
+                        <div class="confession">
+                            <p>${f.conteudo}</p>
+                            <span class="time">Sussurrado às ${dataHora}</span>
+                        </div>`;
                 });
             });
         }
