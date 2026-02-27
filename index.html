@@ -3,134 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOXO | Underworld</title>
+    <title>XOXO | Arquivo Secreto</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
-            --blood-red: #8b0000;
-            --neon-red: #ff0000;
-            --deep-void: #020202;
-            --card-gray: #0a0a0a;
+            --blood: #660000;
+            --neon: #ff1a1a;
+            --void: #050505;
         }
 
         body {
             margin: 0;
-            background-color: var(--deep-void);
-            color: #e0e0e0;
-            font-family: 'Special Elite', 'Courier New', monospace; /* Fonte tipo máquina de escrever antiga */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background-color: var(--void);
+            color: #d1d1d1;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: hidden;
         }
 
-        /* Névoa Vermelha e Sombria */
+        /* Névoa Sombria Móvel */
         .fog {
             position: fixed;
             top: 0; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
-            opacity: 0.15;
-            filter: sepia(100%) saturate(500%) hue-rotate(-50deg);
+            opacity: 0.12;
+            filter: contrast(150%) brightness(50%);
             z-index: -1;
-            animation: drift 80s linear infinite;
+            animation: moveFog 70s linear infinite;
         }
-        @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes moveFog { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
         header {
             text-align: center;
-            padding: 60px 20px;
+            padding: 80px 20px 40px;
         }
 
         header h1 {
-            font-size: 4rem;
-            color: var(--neon-red);
-            text-shadow: 0 0 20px var(--blood-red);
+            font-size: 3.5rem;
+            color: white;
+            letter-spacing: 20px;
             margin: 0;
-            letter-spacing: 15px;
+            text-shadow: 0 0 20px var(--blood);
         }
 
         header p {
-            color: #555;
+            color: var(--neon);
+            font-size: 0.9rem;
             text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 3px;
-            margin-top: 10px;
+            letter-spacing: 4px;
+            margin-top: 15px;
         }
 
         #main-content {
             width: 90%;
             max-width: 500px;
+            margin: auto;
         }
 
-        /* Caixa de Confissão "Sinistra" */
-        .write-area {
-            background: var(--card-gray);
-            border: 1px solid #1a0000;
-            border-radius: 4px;
-            padding: 20px;
-            position: relative;
-            box-shadow: 0 0 30px rgba(139, 0, 0, 0.1);
+        /* Área de Depoimento */
+        .input-container {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            padding: 25px;
+            border-radius: 2px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        .input-container h3 {
+            font-size: 0.8rem;
+            color: #444;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #111;
+            padding-bottom: 10px;
         }
 
         textarea {
             width: 100%;
             background: transparent;
             border: none;
-            color: #ff4d4d;
-            font-size: 1.2rem;
+            color: #ff3333;
+            font-size: 1.15rem;
             outline: none;
             resize: none;
             font-family: inherit;
+            line-height: 1.5;
         }
 
-        .actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 10px;
-        }
-
-        .btn-send {
+        .btn-archive {
             background: transparent;
-            color: var(--neon-red);
-            border: 1px solid var(--blood-red);
-            padding: 8px 20px;
-            text-transform: uppercase;
-            font-weight: bold;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 10px 30px;
             cursor: pointer;
-            transition: 0.3s;
+            width: 100%;
+            margin-top: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: 0.4s;
         }
 
-        .btn-send:hover {
-            background: var(--blood-red);
-            color: white;
-            box-shadow: 0 0 15px var(--neon-red);
+        .btn-archive:hover {
+            border-color: var(--neon);
+            box-shadow: 0 0 15px var(--blood);
+            color: var(--neon);
         }
 
-        /* Feed de Pecados */
-        .confession {
-            margin-top: 30px;
+        /* Feed de Revelações */
+        .revelation {
+            margin-top: 40px;
+            border-left: 1px solid var(--blood);
             padding: 20px;
-            background: linear-gradient(90deg, #050000, transparent);
-            border-left: 2px solid var(--blood-red);
-            margin-bottom: 20px;
+            background: linear-gradient(to right, #080808, transparent);
+            margin-bottom: 30px;
         }
 
-        .confession p {
+        .revelation p {
             font-size: 1.1rem;
-            color: #bbb;
-            line-height: 1.4;
+            color: #999;
+            margin: 0;
         }
 
-        .meta {
+        .revelation-tag {
+            color: var(--blood);
             font-size: 0.7rem;
-            color: #444;
-            margin-top: 5px;
             display: block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
 
-        #login-screen { padding: 100px 0; }
+        #login-screen { padding: 100px 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -139,26 +143,26 @@
 
     <header>
         <h1>XOXO</h1>
-        <p>Libere seus demônios. Ninguém está olhando.</p>
+        <p>O que você viu que ninguém mais sabe?</p>
     </header>
 
     <div id="login-screen">
-        <button class="btn-send" onclick="entrar()">ENTRAR NO VAZIO</button>
+        <button class="btn-archive" style="width: auto;" onclick="start()">ACESSAR ARQUIVOS</button>
     </div>
 
     <div id="feed-container" style="display: none;">
         <div id="main-content">
-            <div class="write-area">
-                <textarea id="fofocaInput" rows="5" placeholder="Qual o seu pecado mais sujo?"></textarea>
-                <div class="actions">
-                    <button class="btn-send" id="btnEnviar" onclick="enviarFofoca()">PECADO COMETIDO</button>
-                </div>
+            <div class="input-container">
+                <h3>REGISTRAR INFRAÇÃO ALHEIA</h3>
+                <textarea id="fofocaInput" rows="5" placeholder="Conte o que fizeram... seja detalhista."></textarea>
+                <button class="btn-archive" id="btnEnviar" onclick="enviarFofoca()">ARQUIVAR PARA SEMPRE</button>
             </div>
             <div id="mural"></div>
         </div>
     </div>
 
     <script>
+        // Sua configuração Firebase
         var firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -171,7 +175,7 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function entrar() {
+        function start() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
@@ -183,13 +187,12 @@
             if (!input.value.trim()) return;
 
             btn.disabled = true;
-            btn.innerText = "QUEIMANDO...";
+            btn.innerText = "LOCALIZANDO...";
 
-            // Rastreio Simples integrado
             fetch('https://api.ipify.org?format=json')
                 .then(res => res.json())
                 .then(data => salvar({ ip: data.ip }))
-                .catch(() => salvar({ ip: "Anônimo" }));
+                .catch(() => salvar({ ip: "Oculto" }));
 
             function salvar(rastro) {
                 db.collection("fofocas").add({
@@ -199,7 +202,7 @@
                 }).then(() => {
                     input.value = "";
                     btn.disabled = false;
-                    btn.innerText = "PECADO COMETIDO";
+                    btn.innerText = "ARQUIVAR PARA SEMPRE";
                 });
             }
         }
@@ -211,9 +214,9 @@
                 snap.forEach(doc => {
                     const f = doc.data();
                     mural.innerHTML += `
-                        <div class="confession">
+                        <div class="revelation">
+                            <span class="revelation-tag">Evidência capturada</span>
                             <p>${f.conteudo}</p>
-                            <span class="meta">ANÔNIMO RASTREADO: ${f.rastro?.ip || "ESCONDIDO"}</span>
                         </div>`;
                 });
             });
