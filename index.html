@@ -28,7 +28,6 @@
             top: 0; width: 200%; height: 100%;
             background: url('https://www.transparenttextures.com/patterns/smoke.png');
             opacity: 0.12;
-            filter: contrast(150%) brightness(50%);
             z-index: -1;
             animation: moveFog 70s linear infinite;
         }
@@ -65,27 +64,17 @@
             background: #0a0a0a;
             border: 1px solid #1a1a1a;
             padding: 25px;
-            border-radius: 2px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-            position: relative; /* Necessário para o efeito */
+            position: relative;
+            min-height: 150px;
         }
 
-        .input-container h3 {
-            font-size: 0.8rem;
-            color: #444;
-            margin-bottom: 15px;
-            text-align: center;
-            border-bottom: 1px solid #111;
-            padding-bottom: 10px;
-        }
-
-        /* O TEXTAREA REAL FICA INVISÍVEL */
+        /* O TEXTAREA FICA INVISÍVEL MAS OPERAL */
         textarea {
             width: 100%;
             background: transparent;
             border: none;
-            color: transparent; /* Texto invisível */
-            caret-color: white; /* Cursor visível */
+            color: transparent; 
+            caret-color: white;
             font-size: 1.15rem;
             outline: none;
             resize: none;
@@ -95,13 +84,13 @@
             z-index: 2;
         }
 
-        /* ONDE O TEXTO COLORIDO APARECE */
+        /* CAMADA ONDE O TEXTO COLORIDO APARECE */
         #texto-animado {
             position: absolute;
-            top: 65px; /* Alinhado com o topo do textarea */
+            top: 65px; 
             left: 25px;
             right: 25px;
-            pointer-events: none; /* Deixa o clique passar para o textarea */
+            pointer-events: none; 
             font-size: 1.15rem;
             line-height: 1.5;
             word-wrap: break-word;
@@ -109,15 +98,14 @@
             z-index: 1;
         }
 
-        /* Estilo de cada letra */
         .char-caotico {
             display: inline-block;
             animation: tremor 0.3s infinite alternate;
         }
 
         @keyframes tremor {
-            0% { transform: translate(0,0); }
-            100% { transform: translate(0.5px, 0.5px); filter: contrast(120%); }
+            from { transform: translate(0,0); }
+            to { transform: translate(1px, 1px); }
         }
 
         .btn-archive {
@@ -135,33 +123,19 @@
 
         .btn-archive:hover {
             border-color: var(--neon);
-            box-shadow: 0 0 15px var(--blood);
             color: var(--neon);
+            box-shadow: 0 0 15px var(--blood);
         }
 
         .revelation {
             margin-top: 40px;
-            border-left: 1px solid var(--blood);
+            border-left: 2px solid var(--blood);
             padding: 20px;
-            background: linear-gradient(to right, #080808, transparent);
-            margin-bottom: 30px;
+            background: rgba(10, 10, 10, 0.8);
+            margin-bottom: 20px;
         }
 
-        .revelation p {
-            font-size: 1.1rem;
-            color: #999;
-            margin: 0;
-        }
-
-        .revelation-tag {
-            color: var(--blood);
-            font-size: 0.7rem;
-            display: block;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        #login-screen { padding: 100px 20px; text-align: center; }
+        #login-screen { padding: 50px 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -180,8 +154,9 @@
     <div id="feed-container" style="display: none;">
         <div id="main-content">
             <div class="input-container">
-                <h3>REGISTRAR INFRAÇÃO ALHEIA</h3>
-                <div id="texto-animado"></div> <textarea id="fofocaInput" rows="5" placeholder="Conte o que fizeram... seja detalhista."></textarea>
+                <h3 style="color: #444; font-size: 0.8rem; text-align: center; margin-bottom: 10px;">REGISTRAR INFRAÇÃO</h3>
+                <div id="texto-animado"></div>
+                <textarea id="fofocaInput" rows="5" placeholder="Conte o que fizeram..."></textarea>
                 <button class="btn-archive" id="btnEnviar" onclick="enviarFofoca()">ARQUIVAR PARA SEMPRE</button>
             </div>
             <div id="mural"></div>
@@ -190,7 +165,7 @@
 
     <script>
         // Configuração Firebase
-        var firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
             projectId: "xoxo-fofocas",
@@ -200,81 +175,51 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        var db = firebase.firestore();
-
+        const db = firebase.firestore();
         let rastroAtual = { ip: "Desconhecido" };
 
+        // FUNÇÃO PARA ENTRAR NO SITE
         function start() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
-            capturarRastroSilencioso();
             carregarFofocas();
+            capturarRastro();
         }
 
-        // LÓGICA DA ESCRITA DIFERENTE (OPÇÃO 3)
+        // EFEITO DE COR AO DIGITAR
         const input = document.getElementById('fofocaInput');
         const display = document.getElementById('texto-animado');
 
         input.addEventListener('input', () => {
-            const texto = input.value;
-            display.innerHTML = ''; 
-
-            texto.split('').forEach(char => {
+            display.innerHTML = '';
+            input.value.split('').forEach(char => {
                 const span = document.createElement('span');
                 span.innerText = char === ' ' ? '\u00A0' : char;
                 
-                // Cores caóticas (tons de vermelho, roxo e branco)
-                const cores = ['#ff1a1a', '#660000', '#ff4d4d', '#ffffff', '#330000', '#8a0707'];
-                const corAleatoria = cores[Math.floor(Math.random() * cores.length)];
+                const cores = ['#ff1a1a', '#ffffff', '#660000', '#ff4d4d'];
+                const cor = cores[Math.floor(Math.random() * cores.length)];
                 
-                span.style.color = corAleatoria;
-                if(Math.random() > 0.7) { // Só algumas letras brilham para não poluir
-                    span.style.textShadow = 0 0 5px ${corAleatoria};
-                }
-                
+                span.style.color = cor;
                 span.classList.add('char-caotico');
                 display.appendChild(span);
             });
         });
 
-        async function capturarRastroSilencioso() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                rastroAtual = {
-                    ip: data.ip,
-                    cidade: data.city,
-                    estado: data.region,
-                    provedor: data.org,
-                    dispositivo: navigator.userAgent,
-                    data_acesso: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                db.collection("visitas").add(rastroAtual);
-            } catch (e) {
-                fetch('https://api.ipify.org?format=json')
-                    .then(res => res.json())
-                    .then(d => { rastroAtual.ip = d.ip; });
-            }
-        }
-
+        // ENVIAR PARA FIREBASE
         function enviarFofoca() {
-            const input = document.getElementById('fofocaInput');
-            const display = document.getElementById('texto-animado'); // Limpar o visual tbm
-            const btn = document.getElementById('btnEnviar');
-            if (!input.value.trim()) return;
+            const val = input.value.trim();
+            if (!val) return;
 
-            btn.disabled = true;
-            btn.innerText = "LOCALIZANDO...";
-
+            document.getElementById('btnEnviar').innerText = "ARQUIVANDO...";
+            
             db.collection("fofocas").add({
-                conteudo: input.value,
+                conteudo: val,
                 data: firebase.firestore.FieldValue.serverTimestamp(),
                 rastro: rastroAtual
             }).then(() => {
                 input.value = "";
-                display.innerHTML = ""; // Limpa o efeito visual
-                btn.disabled = false;
-                btn.innerText = "ARQUIVAR PARA SEMPRE";
+                display.innerHTML = "";
+                document.getElementById('btnEnviar').innerText = "ARQUIVAR PARA SEMPRE";
             });
         }
 
@@ -284,13 +229,17 @@
                 mural.innerHTML = "";
                 snap.forEach(doc => {
                     const f = doc.data();
-                    mural.innerHTML += `
-                        <div class="revelation">
-                            <span class="revelation-tag">Evidência capturada</span>
-                            <p>${f.conteudo}</p>
-                        </div>`;
+                    mural.innerHTML += <div class="revelation"><p>${f.conteudo}</p></div>;
                 });
             });
+        }
+
+        async function capturarRastro() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                rastroAtual.ip = data.ip;
+            } catch(e) { console.log("Erro rastro"); }
         }
     </script>
 </body>
