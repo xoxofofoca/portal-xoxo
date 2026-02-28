@@ -65,10 +65,10 @@
             border: 1px solid #1a1a1a;
             padding: 25px;
             position: relative;
-            min-height: 150px;
+            min-height: 180px;
         }
 
-        /* O TEXTAREA FICA INVISÍVEL MAS OPERAL */
+        /* TEXTAREA INVISÍVEL PARA CAPTURAR O TEXTO */
         textarea {
             width: 100%;
             background: transparent;
@@ -84,7 +84,7 @@
             z-index: 2;
         }
 
-        /* CAMADA ONDE O TEXTO COLORIDO APARECE */
+        /* ONDE AS LETRAS COLORIDAS APARECEM */
         #texto-animado {
             position: absolute;
             top: 65px; 
@@ -154,7 +154,7 @@
     <div id="feed-container" style="display: none;">
         <div id="main-content">
             <div class="input-container">
-                <h3 style="color: #444; font-size: 0.8rem; text-align: center; margin-bottom: 10px;">REGISTRAR INFRAÇÃO</h3>
+                <h3 style="color: #444; font-size: 0.7rem; text-align: center; margin-bottom: 10px;">REGISTRAR INFRAÇÃO ALHEIA</h3>
                 <div id="texto-animado"></div>
                 <textarea id="fofocaInput" rows="5" placeholder="Conte o que fizeram..."></textarea>
                 <button class="btn-archive" id="btnEnviar" onclick="enviarFofoca()">ARQUIVAR PARA SEMPRE</button>
@@ -164,7 +164,7 @@
     </div>
 
     <script>
-        // Configuração Firebase
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyC_RKEhHxEvgDN0w7X1AMAwE0a4ljiSbh4",
             authDomain: "xoxo-fofocas.firebaseapp.com",
@@ -174,12 +174,15 @@
             appId: "1:730968176054:web:fcabf0465b189fddbdbd17"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.firestore();
         let rastroAtual = { ip: "Desconhecido" };
 
-        // FUNÇÃO PARA ENTRAR NO SITE
+        // FUNÇÃO PARA MUDAR DE TELA
         function start() {
+            console.log("Iniciando...");
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             carregarFofocas();
@@ -190,22 +193,23 @@
         const input = document.getElementById('fofocaInput');
         const display = document.getElementById('texto-animado');
 
-        input.addEventListener('input', () => {
-            display.innerHTML = '';
-            input.value.split('').forEach(char => {
-                const span = document.createElement('span');
-                span.innerText = char === ' ' ? '\u00A0' : char;
-                
-                const cores = ['#ff1a1a', '#ffffff', '#660000', '#ff4d4d'];
-                const cor = cores[Math.floor(Math.random() * cores.length)];
-                
-                span.style.color = cor;
-                span.classList.add('char-caotico');
-                display.appendChild(span);
+        if(input) {
+            input.addEventListener('input', () => {
+                display.innerHTML = '';
+                input.value.split('').forEach(char => {
+                    const span = document.createElement('span');
+                    span.innerText = char === ' ' ? '\u00A0' : char;
+                    
+                    const cores = ['#ff1a1a', '#ffffff', '#660000', '#ff4d4d'];
+                    const cor = cores[Math.floor(Math.random() * cores.length)];
+                    
+                    span.style.color = cor;
+                    span.classList.add('char-caotico');
+                    display.appendChild(span);
+                });
             });
-        });
+        }
 
-        // ENVIAR PARA FIREBASE
         function enviarFofoca() {
             const val = input.value.trim();
             if (!val) return;
@@ -220,7 +224,7 @@
                 input.value = "";
                 display.innerHTML = "";
                 document.getElementById('btnEnviar').innerText = "ARQUIVAR PARA SEMPRE";
-            });
+            }).catch(err => console.error("Erro ao enviar:", err));
         }
 
         function carregarFofocas() {
