@@ -1,192 +1,43 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Para Minha Emilli</title>
+    <title>Saúde do Corpo</title>
     <style>
-        /* CSS PREMIUM */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body, html {
-            width: 100%; height: 100%;
-            background: #000;
-            overflow: hidden;
-            font-family: 'Poppins', sans-serif;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        /* Fundo de Nebulosa Animada */
-        #canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-            filter: blur(2px);
-        }
-
-        /* Overlay para dar profundidade */
-        .overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 20%, black 120%);
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        .main-card {
-            position: relative;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50px;
-            padding: 60px 40px;
-            text-align: center;
-            width: 90%;
-            max-width: 550px;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.9);
-            animation: cardFloat 6s ease-in-out infinite;
-        }
-
-        @keyframes cardFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-
-        h1 {
-            font-size: 2.8rem;
-            font-weight: 200;
-            letter-spacing: 15px;
-            color: #fff;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
-
-        #textTarget {
-            font-size: 1.3rem;
-            line-height: 1.8;
-            color: #f0f0f0;
-            min-height: 150px;
-            margin-bottom: 30px;
-            font-weight: 300;
-        }
-
-        .gold-button {
-            background: linear-gradient(45deg, #d4af37, #f9e29c);
-            color: #000;
-            border: none;
-            padding: 22px 50px;
-            border-radius: 100px;
-            font-weight: 800;
-            font-size: 0.9rem;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
-            text-transform: uppercase;
-        }
-
-        .gold-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 15px 50px rgba(212, 175, 55, 0.5);
-        }
-
-        .hidden { display: none; }
-
-        /* Estilo da Frase Final */
-        .highlight {
-            color: #d4af37;
-            font-weight: 600;
-            display: block;
-            margin-top: 15px;
-            font-size: 1.5rem;
-        }
+        body { font-family: Arial; background: #f0f4f8; text-align: center; }
+        h1 { color: #2e7d32; }
+        form { margin: 20px; }
+        input { margin: 5px; padding: 10px; width: 250px; }
+        button { padding: 10px; background: #4caf50; color: white; border: none; cursor: pointer; }
+        .resultado { margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; }
+        .ideal { font-weight: bold; color: #1b5e20; }
+        img { margin-top: 20px; max-width: 80%; border: 2px solid #4caf50; border-radius: 8px; }
     </style>
 </head>
 <body>
+    <h1>🏋️‍♀️ Saúde do Corpo</h1>
+    <p>Digite seus dados para calcular o IMC, descobrir seu peso ideal e acompanhar sua evolução.</p>
 
-    <canvas id="canvas"></canvas>
-    <div class="overlay"></div>
+    <form method="post">
+        <input type="number" name="idade" placeholder="Idade" required><br>
+        <input type="number" step="0.1" name="peso" placeholder="Peso (kg)" required><br>
+        <input type="number" step="0.01" name="altura" placeholder="Altura (m)" required><br>
+        <button type="submit">Calcular</button>
+    </form>
 
-    <div class="main-card">
-        <h1>EMILLI</h1>
-        <div id="textTarget">Uma mensagem eterna para você...</div>
-        <button class="gold-button" id="startBtn">Abrir Presente</button>
+    {% if resultado %}
+    <div class="resultado">
+        <h2>Status: {{ resultado.status }}</h2>
+        <p>{{ resultado.mensagem }}</p>
+        <p class="ideal">Seu peso ideal está em torno de {{ resultado.peso_ideal }} kg.</p>
+        <p><strong>Dieta recomendada:</strong> {{ resultado.dieta }}</p>
+        <p><strong>Treino sugerido:</strong> {{ resultado.treino }}</p>
     </div>
 
-    <audio id="bgMusic" loop>
-        <source src="https://files.catbox.moe/tooofe.mp3" type="audio/mpeg">
-    </audio>
-
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const audio = document.getElementById('bgMusic');
-        const btn = document.getElementById('startBtn');
-        const textDisplay = document.getElementById('textTarget');
-
-        const msgOriginal = "Voltei pra ficar e não te deixar de maneira alguma. Amo você Emilli, você é minha.";
-
-        // --- ANIMAÇÃO DE FUNDO (PARTÍCULAS PROFISSIONAIS) ---
-        let dots = [];
-        function init() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            dots = [];
-            for (let i = 0; i < 120; i++) {
-                dots.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 0.5,
-                    vy: (Math.random() - 0.5) * 0.5,
-                    size: Math.random() * 2
-                });
-            }
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-            dots.forEach(dot => {
-                dot.x += dot.vx;
-                dot.y += dot.vy;
-                if (dot.x < 0 || dot.x > canvas.width) dot.vx *= -1;
-                if (dot.y < 0 || dot.y > canvas.height) dot.vy *= -1;
-                ctx.beginPath();
-                ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            requestAnimationFrame(draw);
-        }
-
-        init();
-        draw();
-        window.onresize = init;
-
-        // --- EFEITO DE REVELAÇÃO ---
-        btn.addEventListener('click', () => {
-            audio.play().then(() => {
-                btn.classList.add('hidden');
-                textDisplay.innerHTML = "";
-                typeWriter(msgOriginal, 0);
-            }).catch(e => {
-                alert("Clique novamente no botão para liberar o áudio!");
-            });
-        });
-
-        function typeWriter(text, i) {
-            if (i < text.length) {
-                textDisplay.innerHTML += text.charAt(i);
-                setTimeout(() => typeWriter(text, i + 1), 70);
-            } else {
-                // Adiciona um brilho final na frase
-                textDisplay.style.transition = "1s";
-                textDisplay.style.textShadow = "0 0 20px rgba(255,255,255,0.8)";
-            }
-        }
-    </script>
+    {% if grafico %}
+        <h3>Sua evolução:</h3>
+        <img src="{{ grafico }}" alt="Gráfico de evolução do peso">
+    {% endif %}
+    {% endif %}
 </body>
 </html>
